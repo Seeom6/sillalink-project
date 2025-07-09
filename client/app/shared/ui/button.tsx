@@ -44,6 +44,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${className}`}
       disabled={disabled || isLoading}
+      suppressHydrationWarning
       {...props}
     >
       {isLoading && (

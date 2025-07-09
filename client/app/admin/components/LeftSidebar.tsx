@@ -99,7 +99,7 @@ const LeftSidebar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Image src="/Silla-Link-compnay.svg" alt={"silla Link Logo"} width={128} height={128} className="w-32"/>
+            <Image src="/Silla-Link-compnay.svg" alt={"silla Link Logo"} width={128} height={128} className="w-32 h-auto" priority/>
           </motion.div>
           <motion.p 
             className="text-medium mt-3 text-secondary"
@@ -195,11 +195,12 @@ const LeftSidebar = () => {
         <motion.button
           onClick={handleLogout}
           className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-white/10 hover:text-xl transition-colors"
-          whileHover={{ 
+          whileHover={{
             backgroundColor: "rgba(255, 255, 255, 0.1)",
             paddingLeft: "1.5rem"
           }}
           whileTap={{ scale: 0.98 }}
+          suppressHydrationWarning
         >
           <motion.span 
             animate={{

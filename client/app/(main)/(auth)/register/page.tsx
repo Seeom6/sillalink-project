@@ -36,11 +36,13 @@ const RegisterPage = () => {
   const onSubmit: SubmitHandler<InitiateRegistrationPayload> = (data) => {
     mutate(data, {
       onSuccess: () => {
-        // Store email in sessionStorage for next steps
-        sessionStorage.setItem('registrationEmail', data.email);
-        sessionStorage.setItem('registrationFirstName', data.firstName);
-        sessionStorage.setItem('registrationLastName', data.lastName);
-        
+        // Store email in sessionStorage for next steps (client-side only)
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('registrationEmail', data.email);
+          sessionStorage.setItem('registrationFirstName', data.firstName);
+          sessionStorage.setItem('registrationLastName', data.lastName);
+        }
+
         // Navigate to OTP verification
         router.push('/register/verify-otp');
       }

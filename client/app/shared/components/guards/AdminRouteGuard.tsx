@@ -20,7 +20,11 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
 
   // For development, bypass authentication immediately
   if (process.env.NODE_ENV === 'development') {
-    console.log('AdminRouteGuard - Development mode, bypassing auth completely');
+    // Reduce console noise by using a module-level flag
+    if (typeof window !== 'undefined' && !(window as any).__adminDevModeLogged) {
+      console.log('AdminRouteGuard - Development mode, bypassing auth completely');
+      (window as any).__adminDevModeLogged = true;
+    }
     return <>{children}</>;
   }
 

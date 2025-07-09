@@ -25,8 +25,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Check authentication status on mount
     checkAuthStatus();
   }, []);
@@ -35,14 +37,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       // Make a test API call to check if the user is authenticated
-      const response = await fetch('/api/v1/website/auth/me', {
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${baseURL}/website/auth/me`, {
         method: 'GET',
         credentials: 'include',
       });
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('Auth check response:', responseData); // Debug log
 
         // Handle nested response structure from backend
         const userData = responseData?.data || responseData;
@@ -50,19 +52,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (userData && userData.id) {
           setUser(userData);
           setIsAuthenticated(true);
-          console.log('Authentication successful, user:', userData);
         } else {
-          console.log('Invalid user data structure:', userData);
           setIsAuthenticated(false);
           setUser(null);
         }
       } else {
-        console.log('Auth check failed:', response.status); // Debug log
         setIsAuthenticated(false);
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check error:', error); // Debug log
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -83,7 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('AuthContext login response:', responseData);
 
         // Handle nested response structure
         const userData = responseData?.data?.user || responseData?.user;
@@ -97,10 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ? '/admin/dashboard'
             : '/employee/dashboard';
 
-          console.log('AuthContext login - User role:', userData.role, 'Redirect to:', redirectTo);
           return { success: true, redirectTo };
         } else {
-          console.error('AuthContext login - No user data in response');
           return { success: false, error: 'Invalid response format' };
         }
       } else {
@@ -108,7 +103,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: errorData.message || 'Login failed' };
       }
     } catch (error) {
-      console.error('AuthContext login error:', error);
       return { success: false, error: 'Network error occurred' };
     }
   };
@@ -121,12 +115,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
       });
     } catch (error) {
-      console.error('Logout error:', error);
     } finally {
       setUser(null);
       setIsAuthenticated(false);
     }
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <AuthContext.Provider value={{ isAuthenticated: false, user: null, isLoading: true, login, logout, checkAuthStatus }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout, checkAuthStatus }}>

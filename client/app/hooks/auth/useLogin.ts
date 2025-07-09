@@ -13,8 +13,26 @@ export const useLogin = () => {
   const toast = useToast();
   const { checkAuthStatus } = useAuth();
 
+  const smartLogin = async (payload: LoginPayload) => {
+    // Try admin login first for admin users
+    try {
+      const adminResult = await AuthApi.adminLogin(payload);
+      return adminResult;
+    } catch (adminError) {
+      // If admin login fails, try regular login
+      console.log('Admin login failed, trying regular login:', adminError);
+      try {
+        const regularResult = await AuthApi.login(payload);
+        return regularResult;
+      } catch (regularError) {
+        // If both fail, throw the regular error (more likely to be the intended endpoint)
+        throw regularError;
+      }
+    }
+  };
+
   return useMutation({
-    mutationFn: (payload: LoginPayload) => AuthApi.login(payload),
+    mutationFn: smartLogin,
     onSuccess: async (data : any) => {
       console.log('Login response:', data); // Debug log
 

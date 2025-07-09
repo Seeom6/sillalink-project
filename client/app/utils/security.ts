@@ -10,15 +10,19 @@ export class SecurityUtils {
     }
 
     try {
-      const response = await fetch('/api/v1/website/auth/csrf-token', {
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${baseURL}/website/auth/csrf-token`, {
         method: 'GET',
         credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
-        this.csrfToken = data.csrfToken;
-        return this.csrfToken;
+        const token = data.csrfToken || '';
+        this.csrfToken = token;
+        return token;
+      } else {
+        console.warn('CSRF token endpoint returned:', response.status);
       }
     } catch (error) {
       console.error('Failed to get CSRF token:', error);

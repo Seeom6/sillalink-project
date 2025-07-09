@@ -40,6 +40,6 @@ import { RedisModule } from "@Package/cache";
     RefreshTokenStrategy,
     RoleGuard
   ],
-  exports: [JWTStrategy, PassportModule]
+  exports: [JWTStrategy, PassportModule, JwtAuthGuard, RoleGuard]
 })
 export class AuthModule {}

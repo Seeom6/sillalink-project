@@ -34,7 +34,16 @@ export const technologyBaseSchema = z.object({
   
   image: z.string().trim().optional(),
   
-  images: z.array(z.string().trim()).optional(),
+  images: z.union([
+    z.array(z.string().trim()),
+    z.string().transform((str) => {
+      try {
+        return JSON.parse(str);
+      } catch {
+        return str.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    })
+  ]).pipe(z.array(z.string().trim())).optional(),
   
   officialWebsite: z.string()
     .url('Invalid website URL')
@@ -48,29 +57,73 @@ export const technologyBaseSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  tags: z.array(z.string().trim().min(1, 'Tag cannot be empty')).optional(),
+  tags: z.preprocess((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  }, z.array(z.string().trim()).default([])).optional(),
   
-  relatedTechnologies: z.array(z.string().trim().min(1, 'Related technology cannot be empty')).optional(),
+  relatedTechnologies: z.preprocess((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  }, z.array(z.string().trim()).default([])).optional(),
   
-  proficiencyLevel: z.number()
+  proficiencyLevel: z.coerce.number()
     .min(0, 'Proficiency level must be at least 0')
     .max(100, 'Proficiency level must be at most 100')
     .optional(),
-  
-  estimatedLearningHours: z.number()
+
+  estimatedLearningHours: z.coerce.number()
     .min(0, 'Estimated learning hours must be at least 0')
     .optional(),
   
-  prerequisites: z.array(z.string().trim().min(1, 'Prerequisite cannot be empty')).optional(),
+  prerequisites: z.preprocess((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  }, z.array(z.string().trim()).default([])).optional(),
   
-  learningResources: z.array(z.string().trim().min(1, 'Learning resource cannot be empty')).optional(),
+  learningResources: z.preprocess((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  }, z.array(z.string().trim()).default([])).optional(),
   
   notes: z.string()
     .max(1000, 'Notes must be less than 1000 characters')
     .trim()
     .optional(),
   
-  isFeatured: z.boolean().optional(),
+  isFeatured: z.coerce.boolean().optional(),
   
   version: z.string()
     .max(50, 'Version must be less than 50 characters')
@@ -82,7 +135,7 @@ export const technologyBaseSchema = z.object({
     .optional()
     .or(z.date().optional()),
   
-  projectsUsedIn: z.number()
+  projectsUsedIn: z.coerce.number()
     .min(0, 'Projects used in must be at least 0')
     .optional()
 });
@@ -105,18 +158,29 @@ export const technologyFiltersSchema = z.object({
   
   difficultyLevel: z.nativeEnum(DifficultyLevel).optional(),
   
-  isFeatured: z.boolean().optional(),
+  isFeatured: z.coerce.boolean().optional(),
   
-  tags: z.array(z.string().trim()).optional(),
+  tags: z.preprocess((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  }, z.array(z.string().trim()).default([])).optional(),
   
   proficiencyLevel: z.object({
-    min: z.number().min(0).max(100).optional(),
-    max: z.number().min(0).max(100).optional()
+    min: z.coerce.number().min(0).max(100).optional(),
+    max: z.coerce.number().min(0).max(100).optional()
   }).optional(),
-  
-  page: z.number().min(1, 'Page must be at least 1').optional(),
-  
-  limit: z.number().min(1, 'Limit must be at least 1').max(100, 'Limit must be at most 100').optional(),
+
+  page: z.coerce.number().min(1, 'Page must be at least 1').optional(),
+
+  limit: z.coerce.number().min(1, 'Limit must be at least 1').max(100, 'Limit must be at most 100').optional(),
   
   sortBy: z.enum(['name', 'createdAt', 'updatedAt', 'proficiencyLevel', 'projectsUsedIn']).optional(),
   
@@ -147,7 +211,7 @@ export const bulkUpdateTechnologiesSchema = z.object({
     status: z.nativeEnum(TechnologyStatus).optional(),
     category: z.nativeEnum(TechnologyCategory).optional(),
     difficultyLevel: z.nativeEnum(DifficultyLevel).optional(),
-    isFeatured: z.boolean().optional(),
+    isFeatured: z.coerce.boolean().optional(),
     tags: z.array(z.string().trim()).optional()
   }).refine((data) => {
     return Object.keys(data).length > 0;

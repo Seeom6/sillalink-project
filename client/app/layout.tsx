@@ -74,7 +74,9 @@ export default function RootLayout({
               }}
             />
               <FullPageLoader/>
-              {children}
+              <div suppressHydrationWarning>
+                {children}
+              </div>
             </ToastProvider>
           </AuthProvider>
         </Providers>

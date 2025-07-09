@@ -39,17 +39,19 @@ const CreatePasswordPage = () => {
   });
 
   useEffect(() => {
-    // Get registration data from sessionStorage
-    const storedEmail = sessionStorage.getItem('registrationEmail');
-    const storedFirstName = sessionStorage.getItem('registrationFirstName');
-    
-    if (!storedEmail) {
-      router.push('/register');
-      return;
+    // Get registration data from sessionStorage (client-side only)
+    if (typeof window !== 'undefined') {
+      const storedEmail = sessionStorage.getItem('registrationEmail');
+      const storedFirstName = sessionStorage.getItem('registrationFirstName');
+
+      if (!storedEmail) {
+        router.push('/register');
+        return;
+      }
+
+      setEmail(storedEmail);
+      setFirstName(storedFirstName || "");
     }
-    
-    setEmail(storedEmail);
-    setFirstName(storedFirstName || "");
   }, [router]);
 
   const onSubmit: SubmitHandler<{ password: string; confirmPassword: string }> = (data) => {

@@ -94,8 +94,13 @@ export class TechnologyService {
   }
 
   async delete(id: string): Promise<void> {
+    console.log('🔍 Service: Finding technology to delete:', id);
     const technology = await this.findById(id);
-    await this.technologyRepository.softDelete(id);
+    console.log('✅ Service: Technology found:', { id: technology._id, name: technology.name });
+
+    console.log('🗑️ Service: Performing soft delete');
+    const result = await this.technologyRepository.softDelete(id);
+    console.log('✅ Service: Soft delete completed:', result ? 'success' : 'failed');
   }
 
   async findFeatured(limit: number = 6): Promise<TechnologyDocument[]> {

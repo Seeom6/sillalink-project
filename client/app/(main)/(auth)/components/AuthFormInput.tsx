@@ -21,6 +21,7 @@ export const AuthFormInput = forwardRef<HTMLInputElement, AuthFormInputProps>(
           className={`block w-full text-white rounded-md border ${
             error ? "border-red-500" : "border-gray-300"
           } p-2 shadow-sm focus:border-primary focus:ring-primary`}
+          suppressHydrationWarning
           {...props}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

@@ -128,8 +128,7 @@ export const TechnologiesTable = ({
     );
   }
 
-  const isAllSelected = selectedIds.length === technologies.length;
-  const isPartiallySelected = selectedIds.length > 0 && selectedIds.length < technologies.length;
+  const isAllSelected = selectedIds.length === technologies.length && technologies.length > 0;
 
   return (
     <div className="space-y-4">
@@ -168,7 +167,6 @@ export const TechnologiesTable = ({
               <TableHead className="w-12">
                 <Checkbox
                   checked={isAllSelected}
-                  indeterminate={isPartiallySelected}
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>

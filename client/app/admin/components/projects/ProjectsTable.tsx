@@ -184,7 +184,7 @@ export const ProjectsTable = ({
               <TableHead className="w-12">
                 <Checkbox
                   checked={isAllSelected}
-                  indeterminate={isIndeterminate}
+                  indeterminate={isIndeterminate ? true : undefined}
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>

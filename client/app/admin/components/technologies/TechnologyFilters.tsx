@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { X, RotateCcw } from "lucide-react";
-import { 
+import {
   TechnologyFilters as TechnologyFiltersType,
+  TechnologyCategory,
+  TechnologyStatus,
+  DifficultyLevel,
   TECHNOLOGY_CATEGORIES,
   TECHNOLOGY_STATUSES,
   DIFFICULTY_LEVELS
@@ -41,32 +44,40 @@ export const TechnologyFilters = ({
   ]);
 
   const handleCategoryChange = (value: string) => {
-    onFiltersChange({
-      category: value === "all" ? undefined : value as any
-    });
+    const updates: Partial<TechnologyFiltersType> = {};
+    if (value !== "all") {
+      updates.category = value as TechnologyCategory;
+    }
+    onFiltersChange(updates);
   };
 
   const handleStatusChange = (value: string) => {
-    onFiltersChange({
-      status: value === "all" ? undefined : value as any
-    });
+    const updates: Partial<TechnologyFiltersType> = {};
+    if (value !== "all") {
+      updates.status = value as TechnologyStatus;
+    }
+    onFiltersChange(updates);
   };
 
   const handleDifficultyChange = (value: string) => {
-    onFiltersChange({
-      difficultyLevel: value === "all" ? undefined : value as any
-    });
+    const updates: Partial<TechnologyFiltersType> = {};
+    if (value !== "all") {
+      updates.difficultyLevel = value as DifficultyLevel;
+    }
+    onFiltersChange(updates);
   };
 
   const handleFeaturedChange = (checked: boolean) => {
-    onFiltersChange({
-      isFeatured: checked ? true : undefined
-    });
+    const updates: Partial<TechnologyFiltersType> = {};
+    if (checked) {
+      updates.isFeatured = true;
+    }
+    onFiltersChange(updates);
   };
 
   const handleSortByChange = (value: string) => {
     onFiltersChange({
-      sortBy: value as any
+      sortBy: value as keyof TechnologyFiltersType
     });
   };
 
@@ -82,22 +93,32 @@ export const TechnologyFilters = ({
       .split(",")
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0);
-    
-    onFiltersChange({
-      tags: tags.length > 0 ? tags : undefined
-    });
+
+    const updates: Partial<TechnologyFiltersType> = {};
+    if (tags.length > 0) {
+      updates.tags = tags;
+    }
+    onFiltersChange(updates);
   };
 
-  const handleProficiencyChange = (values: number[]) => {
+  const handleProficiencyChange = (value: number | number[]) => {
+    const values = Array.isArray(value) ? value : [value];
     const [min, max] = values;
-    setProficiencyRange([min, max]);
-    
-    onFiltersChange({
-      proficiencyLevel: {
-        min: min > 0 ? min : undefined,
-        max: max < 100 ? max : undefined
+    if (min !== undefined && max !== undefined) {
+      setProficiencyRange([min, max]);
+
+      const proficiencyLevel: { min?: number; max?: number } = {};
+      if (min > 0) {
+        proficiencyLevel.min = min;
       }
-    });
+      if (max < 100) {
+        proficiencyLevel.max = max;
+      }
+
+      onFiltersChange({
+        proficiencyLevel
+      });
+    }
   };
 
   const handleLimitChange = (value: string) => {

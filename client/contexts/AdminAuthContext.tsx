@@ -19,8 +19,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [user, setUser] = useState<any | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Check if user is authenticated by making a test API call
     // Since we're using HTTP-only cookies, we can't read the token directly
     checkAuthStatus();
@@ -30,7 +32,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsLoading(true);
     try {
       // Make a test API call to check if the user is authenticated
-      const response = await fetch('/api/admin/auth/me', {
+      const response = await fetch('/api/v1/admin/auth/me', {
         method: 'GET',
         credentials: 'include',
       });
@@ -64,7 +66,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const logout = async () => {
     try {
       // Call logout endpoint to clear HTTP-only cookies
-      await fetch('/api/admin/auth/logout', {
+      await fetch('/api/v1/admin/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -76,6 +78,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsAuthenticated(false);
     }
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <AdminAuthContext.Provider value={{ isAuthenticated: false, token: null, user: null, isLoading: true, login, logout }}>
+        {children}
+      </AdminAuthContext.Provider>
+    );
+  }
 
   return (
     <AdminAuthContext.Provider value={{ isAuthenticated, token, user, isLoading, login, logout }}>

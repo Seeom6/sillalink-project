@@ -19,6 +19,10 @@ export const AuthApi = {
     return apiClient.post('/website/auth/log-in', payload);
   },
 
+  adminLogin: async (payload: LoginPayload): Promise<LoginResponse> => {
+    return apiClient.post('/admin/auth/login', payload);
+  },
+
   register: async (payload: RegisterPayload): Promise<LoginResponse> => {
     return apiClient.post('/website/auth/sign-up', payload);
   },

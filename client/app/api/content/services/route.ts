@@ -195,14 +195,21 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     
-    // Parse and validate filters
+    // Parse and validate filters, conditionally including properties to satisfy exactOptionalPropertyTypes
+    const searchParam = searchParams.get('search');
+    const categoryParam = searchParams.get('category');
+    const statusParam = searchParams.get('status');
+    const priceTypeParam = searchParams.get('priceType');
+    const isPopularParam = searchParams.get('isPopular');
+    const isFeaturedParam = searchParams.get('isFeatured');
+
     const filters: ServiceFilters = {
-      search: searchParams.get('search') || undefined,
-      category: searchParams.get('category') || undefined,
-      status: searchParams.get('status') || undefined,
-      priceType: searchParams.get('priceType') || undefined,
-      isPopular: searchParams.get('isPopular') ? searchParams.get('isPopular') === 'true' : undefined,
-      isFeatured: searchParams.get('isFeatured') ? searchParams.get('isFeatured') === 'true' : undefined,
+      ...(searchParam && { search: searchParam }),
+      ...(categoryParam && { category: categoryParam }),
+      ...(statusParam && { status: statusParam }),
+      ...(priceTypeParam && { priceType: priceTypeParam }),
+      ...(isPopularParam && { isPopular: isPopularParam === 'true' }),
+      ...(isFeaturedParam && { isFeatured: isFeaturedParam === 'true' }),
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10,
       sortBy: (searchParams.get('sortBy') as any) || 'sortOrder',

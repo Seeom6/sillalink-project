@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, Grid, List, MoreVertical } from "lucide-react";
-import { TechnologiesGrid } from "../components/technologies/TechnologiesGrid";
+import { TechnologiesGrid } from "./components";
 import { TechnologiesTable } from "../components/technologies/TechnologiesTable";
 import { TechnologyFilters } from "../components/technologies/TechnologyFilters";
 import { TechnologyStats } from "../components/technologies/TechnologyStats";
@@ -17,9 +17,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/shared/ui/dropdown-menu";
-import { useGetTechnologies, useGetTechnologyStats, useDeleteTechnology, useToggleFeatured } from "@/app/hooks/technology/useTechnology";
+import { useTechnologies, useTechnologyActions } from "@/app/hooks/technology/useTechnology";
 import { TechnologyFilters as TechnologyFiltersType } from "@/app/types/technologyTypes";
 import { ConfirmationDialog } from "../components/common/ConfirmationDialog";
+import { globalEvents, EVENTS } from "@/app/utils/eventEmitter";
 
 export default function TechnologiesPage() {
   const router = useRouter();
@@ -58,27 +59,83 @@ export default function TechnologiesPage() {
   });
 
   // Combine search term with filters
-  const queryFilters = {
+  const queryFilters: TechnologyFiltersType = {
     ...filters,
-    search: searchTerm || undefined
+    ...(searchTerm && { search: searchTerm })
   };
 
-  const { data: technologiesResponse, isLoading, error } = useGetTechnologies(queryFilters);
-  const { data: stats, isLoading: statsLoading, error: statsError } = useGetTechnologyStats();
-  const deleteTechnologyMutation = useDeleteTechnology();
-  const toggleFeaturedMutation = useToggleFeatured();
+  const {
+    technologies: technologiesData,
+    loading: isLoading,
+    error,
+    pagination,
+    refreshTechnologies
+  } = useTechnologies(queryFilters);
 
-  const technologies = technologiesResponse?.data || [];
-  const totalCount = technologiesResponse?.pagination?.total || 0;
-  const totalPages = technologiesResponse?.pagination?.totalPages || 1;
+  const {
+    deleteTechnology: deleteTechnologyAction,
+    toggleFeatured: toggleFeaturedAction,
+    loading: actionLoading
+  } = useTechnologyActions();
 
+  const technologies = technologiesData || [];
+  const totalCount = pagination?.total || 0;
+  const totalPages = pagination?.totalPages || 1;
 
+  // 🔧 Fix: Refresh data when page becomes visible or when navigating back
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshTechnologies();
+      }
+    };
+
+    const handleFocus = () => {
+      refreshTechnologies();
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refreshTechnologies]);
+
+  // 🔧 Fix: Refresh data on component mount (when navigating back)
+  useEffect(() => {
+    refreshTechnologies();
+  }, []); // Empty dependency array means this runs once on mount
+
+  // 🔧 Fix: Listen for technology update events
+  useEffect(() => {
+    const handleTechnologyUpdated = (updatedTechnology: any) => {
+      refreshTechnologies();
+    };
+
+    // Listen for technology update events
+    globalEvents.on(EVENTS.TECHNOLOGY_UPDATED, handleTechnologyUpdated);
+
+    // Cleanup
+    return () => {
+      globalEvents.off(EVENTS.TECHNOLOGY_UPDATED, handleTechnologyUpdated);
+    };
+  }, [refreshTechnologies]);
 
   const handleAddTechnology = () => {
     router.push("/admin/technologies/add");
   };
 
   const handleEditTechnology = (id: string) => {
+    // Validate ID before navigation
+    if (!id || id === 'undefined') {
+      alert('Error: Cannot edit technology - invalid ID. Please refresh the page and try again.');
+      return;
+    }
+
     router.push(`/admin/technologies/edit/${id}`);
   };
 
@@ -87,30 +144,76 @@ export default function TechnologiesPage() {
   };
 
   const handleDeleteTechnology = (id: string) => {
+    // Validate the incoming ID
+    if (!id || typeof id !== 'string' || id === 'undefined') {
+      alert('Error: Cannot delete technology - invalid ID. Please refresh the page and try again.');
+      return;
+    }
+
+    // Find the technology by ID
     const technology = technologies.find(tech => tech._id === id);
+
     if (technology) {
       setDeleteDialog({
         isOpen: true,
         technologyId: id,
         technologyName: technology.name,
       });
+    } else {
+      // Fallback: try to get technology data directly from API
+      handleDeleteTechnologyFallback(id);
     }
   };
 
-  const handleConfirmDelete = () => {
-    if (deleteDialog.technologyId) {
-      deleteTechnologyMutation.mutate(deleteDialog.technologyId, {
-        onSuccess: () => {
-          setDeleteDialog({
-            isOpen: false,
-            technologyId: null,
-            technologyName: "",
-          });
-        },
-        onError: () => {
-          // Error is handled by the mutation hook
-        }
-      });
+  const handleDeleteTechnologyFallback = async (id: string) => {
+    try {
+      // Try to refresh technologies first to get the latest data
+      refreshTechnologies();
+
+      // Try to find the technology again after refresh
+      const updatedTechnology = technologies.find(tech => tech._id === id);
+
+      if (updatedTechnology) {
+        setDeleteDialog({
+          isOpen: true,
+          technologyId: id,
+          technologyName: updatedTechnology.name,
+        });
+      } else {
+        // Set dialog with ID only, we'll show a generic message
+        setDeleteDialog({
+          isOpen: true,
+          technologyId: id,
+          technologyName: `Technology (ID: ${id.slice(-8)})`, // Show last 8 chars of ID
+        });
+      }
+    } catch (error) {
+      // Fallback delete failed - silently handle
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog.technologyId) {
+      return;
+    }
+
+    try {
+      const success = await deleteTechnologyAction(deleteDialog.technologyId);
+
+      if (success) {
+        // Close dialog first
+        setDeleteDialog({
+          isOpen: false,
+          technologyId: null,
+          technologyName: "",
+        });
+
+        // Refresh the technologies list
+        refreshTechnologies();
+      }
+      // If delete failed, the error message is already shown by the deleteTechnologyAction
+    } catch (error) {
+      // Keep dialog open on unexpected errors
     }
   };
 
@@ -134,27 +237,18 @@ export default function TechnologiesPage() {
     }
   };
 
-  const handleConfirmToggleFeatured = () => {
+  const handleConfirmToggleFeatured = async () => {
     if (featuredDialog.technologyId) {
-      toggleFeaturedMutation.mutate(
-        {
-          id: featuredDialog.technologyId,
-          currentStatus: featuredDialog.currentFeaturedStatus
-        },
-        {
-          onSuccess: () => {
-            setFeaturedDialog({
-              isOpen: false,
-              technologyId: null,
-              technologyName: "",
-              currentFeaturedStatus: false,
-            });
-          },
-          onError: () => {
-            // Error is handled by the mutation hook
-          }
-        }
-      );
+      const result = await toggleFeaturedAction(featuredDialog.technologyId);
+      if (result) {
+        setFeaturedDialog({
+          isOpen: false,
+          technologyId: null,
+          technologyName: "",
+          currentFeaturedStatus: false,
+        });
+        refreshTechnologies();
+      }
     }
   };
 
@@ -195,7 +289,6 @@ export default function TechnologiesPage() {
   };
 
   const handleBulkAction = (action: string, selectedIds: string[]) => {
-    console.log("Bulk action:", action, selectedIds);
     // Implement bulk actions
   };
 
@@ -218,20 +311,30 @@ export default function TechnologiesPage() {
 
 
       {/* Stats Cards */}
-      {!statsLoading && !statsError && stats && <TechnologyStats stats={stats} />}
-      {!statsLoading && !statsError && !stats && (
-        <div className="mb-8">
-          <TechnologyStats stats={{
-            totalTechnologies: 0,
-            featuredCount: 0,
-            averageProficiencyLevel: 0,
-            totalLearningHours: 0,
-            categoriesCount: 0,
-            statusCounts: {},
-            difficultyDistribution: {}
-          }} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Total Technologies</h3>
+          <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
         </div>
-      )}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Featured</h3>
+          <p className="text-2xl font-bold text-blue-600">
+            {technologies.filter(tech => tech.isFeatured).length}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Categories</h3>
+          <p className="text-2xl font-bold text-green-600">
+            {new Set(technologies.map(tech => tech.category)).size}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Active</h3>
+          <p className="text-2xl font-bold text-purple-600">
+            {technologies.filter(tech => tech.status === 'active').length}
+          </p>
+        </div>
+      </div>
 
       {/* Search and Filters */}
       <Card className="p-4">
@@ -293,7 +396,7 @@ export default function TechnologiesPage() {
               <DropdownMenuItem onClick={handleResetFilters}>
                 Reset Filters
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log("Export")}>
+              <DropdownMenuItem onClick={() => {}}>
                 Export Data
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -322,21 +425,6 @@ export default function TechnologiesPage() {
         </span>
       </div>
 
-      {/* Simple Test Rendering */}
-      <div className="mb-4 p-4 bg-blue-100 border border-blue-300 rounded">
-        <h3 className="font-bold">🧪 Simple Test:</h3>
-        <p>Technologies count: {technologies.length}</p>
-        {technologies.length > 0 && (
-          <div>
-            <p>First technology: {technologies[0]?.name}</p>
-            <ul className="list-disc list-inside">
-              {technologies.map((tech, index) => (
-                <li key={tech._id || index}>{tech.name} - {tech.category}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
 
       {/* Content */}
       {viewMode === "grid" ? (
@@ -383,7 +471,7 @@ export default function TechnologiesPage() {
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
-        isLoading={deleteTechnologyMutation.isPending}
+        isLoading={actionLoading}
       />
 
       {/* Featured Toggle Confirmation Dialog */}
@@ -400,7 +488,7 @@ export default function TechnologiesPage() {
         confirmText={featuredDialog.currentFeaturedStatus ? "Remove" : "Mark Featured"}
         cancelText="Cancel"
         variant={featuredDialog.currentFeaturedStatus ? "warning" : "info"}
-        isLoading={toggleFeaturedMutation.isPending}
+        isLoading={actionLoading}
       />
     </div>
   );

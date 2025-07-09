@@ -78,7 +78,7 @@ export const TechnologyStats = ({ stats }: TechnologyStatsProps) => {
     return Object.entries(stats.byCategory)
       .map(([category, count]) => ({
         category: category.replace('_', ' ').toUpperCase(),
-        count: count as number
+        count: typeof count === 'number' ? count : 0
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5); // Top 5 categories
@@ -92,7 +92,7 @@ export const TechnologyStats = ({ stats }: TechnologyStatsProps) => {
     return Object.entries(stats.byStatus)
       .map(([status, count]) => ({
         status: status.charAt(0).toUpperCase() + status.slice(1),
-        count: count as number,
+        count: typeof count === 'number' ? count : 0,
         color: getStatusColor(status)
       }))
       .sort((a, b) => b.count - a.count);
@@ -106,12 +106,12 @@ export const TechnologyStats = ({ stats }: TechnologyStatsProps) => {
     return Object.entries(stats.byDifficultyLevel)
       .map(([difficulty, count]) => ({
         difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
-        count: count as number,
+        count: typeof count === 'number' ? count : 0,
         color: getDifficultyColor(difficulty)
       }))
       .sort((a, b) => {
         const order = ['beginner', 'intermediate', 'advanced', 'expert'];
-        return order.indexOf(difficulty.toLowerCase()) - order.indexOf(b.difficulty.toLowerCase());
+        return order.indexOf(a.difficulty.toLowerCase()) - order.indexOf(b.difficulty.toLowerCase());
       });
   };
 
@@ -181,8 +181,8 @@ export const TechnologyStats = ({ stats }: TechnologyStatsProps) => {
           </div>
           <div className="space-y-3">
             {categoryStats.length > 0 ? (
-              categoryStats.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
+              categoryStats.map((item) => (
+                <div key={`category-${item.category}`} className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 capitalize">
                     {item.category}
                   </span>
@@ -217,8 +217,8 @@ export const TechnologyStats = ({ stats }: TechnologyStatsProps) => {
           </div>
           <div className="space-y-3">
             {statusStats.length > 0 ? (
-              statusStats.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
+              statusStats.map((item) => (
+                <div key={`status-${item.status}`} className="flex items-center justify-between">
                   <Badge className={item.color}>
                     {item.status}
                   </Badge>

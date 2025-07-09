@@ -53,6 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           widthStyles,
           className
         )}
+        suppressHydrationWarning
         {...props}
       >
         {isLoading ? (
