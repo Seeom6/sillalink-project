@@ -1,0 +1,20 @@
+services:
+  app:
+    container_name: silla_link_development
+    build:
+      context: .
+      target: development
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env.docker
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network

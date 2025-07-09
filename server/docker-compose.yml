@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+    app:
+      container_name: silla_link_app
+      build:
+        context: .
+        target: development
+      ports:
+        - "5000:5000"
+      env_file:
+        - path: ./.env.docker
+          required: true
+      volumes:
+        - .:/app
+        - /app/node_modules
+      depends_on:
+        mongodb:
+          condition: service_healthy
+        redis:
+          condition: service_healthy
+      networks:
+        - app-network
+      # deploy:
+      #   resources:
+      #     limits:
+      #       cpus: '0.5'
+      #       memory: 512M
+
+    mongodb:
+      image: mongo:8.0.9
+      container_name: silla_link_mongodb
+      restart: always
+      ports: 
+        - "27027:27017"
+      environment:
+        MONGO_INITDB_DATABASE: silla_link
+      command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+      volumes:
+        - mongodata:/data/db
+        - mongo1_config:/data/configdb
+      networks:
+        - app-network
+      healthcheck:
+        test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping').ok"]
+        interval: 10s
+        timeout: 10s
+        retries: 5
+        start_period: 30s
+
+    mongo-init:
+      image: mongo:8.0.9
+      depends_on:
+        mongodb:
+          condition: service_healthy
+      restart: "no"
+      entrypoint: [ "mongosh", "--host", "mongodb:27017", "--eval", "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]})" ]
+      networks:
+        - app-network
+
+    redis:
+      image: redis:7.2
+      container_name: silla_link_redis
+      restart: always
+      ports:
+        - "6389:6379"
+      volumes:
+        - redisdata:/data
+      command: redis-server --appendonly yes
+      networks:
+        - app-network
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodata:
+  redisdata:
+  mongo1_config:

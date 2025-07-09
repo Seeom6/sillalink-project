@@ -1,0 +1,12 @@
+{
+   "data": [
+      {
+         "email": "admin@sillalink.com",
+         "password": "Admin@123",
+         "firstName": "Admin",
+         "lastName": "User",
+         "isActive": true,
+         "role": "admin"
+      }
+   ]
+}

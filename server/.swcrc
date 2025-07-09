@@ -1,0 +1,23 @@
+{
+    "jsc": {
+        "parser": {
+            "syntax": "typescript",
+            "tsx": false,
+            "decorators": true
+        },
+        "transform": {
+            "decoratorMetadata": true
+        },
+        "target": "es2024"
+        },
+    "module": {
+        "type": "commonjs",
+        "strict": true
+    },
+    "minify": false,
+    "sourceMaps": true,
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
