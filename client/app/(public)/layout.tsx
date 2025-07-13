@@ -1,9 +1,10 @@
 "use client";
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Poppins, Inspiration } from 'next/font/google';
 import dynamic from 'next/dynamic';
+import { BrandedLoadingScreen } from '@/components/ui/enhanced-loading';
 
 // Optimized font loading
 const poppins = Poppins({
@@ -46,6 +47,7 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
   const pathname = usePathname();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Define paths where header and footer should be hidden
   const hideHeaderPaths = ["/verification", "/forget-password", "/reset-pass"];
@@ -53,25 +55,47 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   const shouldHideFooter = hideFooterPaths.includes(pathname);
   const shouldHideHeader = hideHeaderPaths.includes(pathname);
 
+  // Handle initial loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 2000); // Show loading for 2 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className={`${poppins.variable} ${inspiration.variable} font-sans antialiased`}>
-      {!shouldHideHeader && (
-        <Suspense fallback={<div className="h-16 bg-indego-dark" />}>
-          <MainNavbar />
-        </Suspense>
-      )}
+    <>
+      {/* Branded Loading Screen */}
+      <BrandedLoadingScreen isLoading={isInitialLoading} />
 
-      <main lang="en" className="relative min-h-screen bg-indego-dark">
-        <Suspense fallback={<PageLoader />}>
-          {children}
-        </Suspense>
-      </main>
+      <div className={`${poppins.variable} ${inspiration.variable} font-sans antialiased`}>
+        {!shouldHideHeader && (
+          <Suspense fallback={<div className="h-16 bg-indego-dark" />}>
+            <MainNavbar />
+          </Suspense>
+        )}
 
-      {!shouldHideFooter && (
-        <Suspense fallback={<div className="h-32 bg-indego-dark" />}>
-          <Footer />
-        </Suspense>
-      )}
-    </div>
+        <main lang="en" className="relative min-h-screen bg-gradient-to-br from-indego-dark via-indego-darker to-dark-950">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(121,22,255,0.1),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(139,92,246,0.1),transparent_50%)]" />
+          </div>
+
+          <Suspense fallback={<PageLoader />}>
+            <div className="relative z-10">
+              {children}
+            </div>
+          </Suspense>
+        </main>
+
+        {!shouldHideFooter && (
+          <Suspense fallback={<div className="h-32 bg-indego-dark" />}>
+            <Footer />
+          </Suspense>
+        )}
+      </div>
+    </>
   );
 }
