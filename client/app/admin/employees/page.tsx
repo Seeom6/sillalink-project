@@ -1,28 +1,56 @@
 "use client"
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { EmployeesTable } from "../components/employees/employeeTable"
+import { DeleteEmployeeDialog, useDeleteEmployeeDialog } from "../components/employees/DeleteEmployeeDialog"
 
 export default function EmployeesPage() {
+  const router = useRouter()
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const route = useRouter()
+  // Delete dialog state
+  const {
+    isOpen: isDeleteDialogOpen,
+    selectedEmployee,
+    openDialog: openDeleteDialog,
+    closeDialog: closeDeleteDialog,
+  } = useDeleteEmployeeDialog();
 
   const handleAddUser = () => {
-      route.push("/admin/employees/add-employee")
+    router.push("/admin/employees/add-employee")
   }
 
-  const handleEditUser = () => {
-
+  const handleEditUser = (employee: any) => {
+    const employeeId = employee.id || employee._id;
+    if (employeeId) {
+      router.push(`/admin/employees/${employeeId}/edit`);
+    } else {
+      console.error('Employee ID not found:', employee);
+      alert('Unable to edit employee: ID not found');
+    }
   }
 
   const handleDeleteUser = (employee: any) => {
-    console.log("Delete user:", employee)
-    // Implement delete user logic
+    openDeleteDialog(employee);
   }
 
   const handleViewUser = (employee: any) => {
-    console.log("View user:", employee)
-    // Implement view user logic
+    console.log('🔍 handleViewUser called with employee:', employee);
+    const employeeId = employee.id || employee._id;
+    console.log('📋 Employee ID extracted:', employeeId);
+    if (employeeId) {
+      console.log(`🚀 Navigating to: /admin/employees/${employeeId}`);
+      router.push(`/admin/employees/${employeeId}`);
+    } else {
+      console.error('❌ Employee ID not found:', employee);
+      alert('Unable to view employee: ID not found');
+    }
+  }
+
+  const handleDeleteSuccess = () => {
+    // Refresh the employee table
+    setRefreshKey(prev => prev + 1);
   }
 
   return (
@@ -33,10 +61,18 @@ export default function EmployeesPage() {
       </div>
 
       <EmployeesTable
+        key={refreshKey}
         onAddUser={handleAddUser}
         onEditUser={handleEditUser}
         onDeleteUser={handleDeleteUser}
         onViewUser={handleViewUser}
+      />
+
+      <DeleteEmployeeDialog
+        employee={selectedEmployee}
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   )

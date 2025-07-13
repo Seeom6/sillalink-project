@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Employee Creation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Employee Creation API Test</h1>
+    
+    <button onclick="testEmployeeCreation()">Test Create Employee</button>
+    <button onclick="testGetEmployees()">Test Get Employees</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="results"></div>
+
+    <script>
+        function addResult(message, type = 'info', data = null) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            
+            let content = message;
+            if (data) {
+                content += '\n' + JSON.stringify(data, null, 2);
+            }
+            
+            const pre = document.createElement('pre');
+            pre.textContent = content;
+            resultDiv.appendChild(pre);
+            
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testEmployeeCreation() {
+            addResult('🚀 Testing employee creation...', 'info');
+            
+            const testEmployee = {
+                firstName: "Test",
+                lastName: "Employee",
+                email: `test.employee.${Date.now()}@example.com`,
+                password: "TestPass123",
+                position: "front-end",
+                department: "engineering",
+                hireDate: "2024-01-15",
+                phone: "+1234567890",
+                employmentStatus: "full-time",
+                role: "employee"
+            };
+
+            addResult('📋 Test employee data:', 'info', testEmployee);
+
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/admin/employee', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(testEmployee)
+                });
+
+                addResult(`📡 Response status: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Employee creation successful!', 'success', data);
+                } else {
+                    const errorData = await response.text();
+                    addResult('❌ Employee creation failed', 'error', errorData);
+                }
+            } catch (error) {
+                addResult('💥 Network error:', 'error', error.message);
+            }
+        }
+
+        async function testGetEmployees() {
+            addResult('📋 Testing get employees...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/admin/employee', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                addResult(`📡 Response status: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Get employees successful! Found ${Array.isArray(data) ? data.length : 'unknown'} employees`, 'success', data);
+                } else {
+                    const errorData = await response.text();
+                    addResult('❌ Get employees failed', 'error', errorData);
+                }
+            } catch (error) {
+                addResult('💥 Network error:', 'error', error.message);
+            }
+        }
+
+        // Auto-run basic info on page load
+        window.onload = function() {
+            addResult('🔧 Employee Creation API Test Suite', 'info');
+            addResult('🌐 Backend API: http://localhost:5000/api/v1/admin/employee', 'info');
+            addResult('🖥️ Frontend: http://localhost:3001/admin/employees/add-employee', 'info');
+            addResult('ℹ️ Click buttons above to test API endpoints', 'info');
+        };
+    </script>
+</body>
+</html>

@@ -1,156 +1,165 @@
 "use client"
 
-import { useMutation, useQuery } from "@tanstack/react-query"
-import type { EmployeesResponse, EmployeeFilters , Employee} from "@/app/types/employeeTypes"
-import { createEmpPayload } from "@/app/api/employee/emp-api-type"
+import { useQuery, useMutation } from "@tanstack/react-query"
 import { empApi } from "@/app/api/employee/employee.api"
-import { useToast } from "../useToast"
-import HandleError from "@/app/lib/ErrorEradication"
+import { createEmpPayload } from "@/app/api/employee/emp-api-type"
+import { useToast } from "@/app/hooks/useToast"
+import { HandleError } from "@/app/lib/ErrorEradication"
+import type { Employee, EmployeeFilters, EmployeesResponse } from "@/app/types/employeeTypes"
 
-// Mock API function - replace with your actual API call
+// Real API function for fetching employees
 const fetchEmployees = async (filters: EmployeeFilters): Promise<EmployeesResponse> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  try {
+    const response = await empApi.getEmp();
 
-  const mockData = [
-    {
-      id: "1",
-      name: "Jane Cooper",
-      username: "@jane",
-      email: "jessica.hanson@example.com",
-      position: "UI",
-      status: "Active" as const,
-      date: "5/27/15",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "2",
-      name: "Wade Warren",
-      username: "@wade456",
-      email: "willie.jennings@example.com",
-      position: "UI/Ux",
-      status: "Active" as const,
-      date: "5/19/12",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "3",
-      name: "Esther Howard",
-      username: "@esther",
-      email: "d.chambers@example.com",
-      position: "UI/Ux",
-      status: "Offline" as const,
-      date: "3/4/16",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "4",
-      name: "Jenny Wilson",
-      username: "@jenny",
-      email: "willie.jennings@example.com",
-      position: "UI/Ux",
-      status: "Offline" as const,
-      date: "3/4/16",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "5",
-      name: "Guy Hawkins",
-      username: "@guy",
-      email: "michael.mitc@example.com",
-      position: "UI/Ux",
-      status: "Wait" as const,
-      date: "7/27/13",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "6",
-      name: "Jacob Jones",
-      username: "@jacob",
-      email: "michael.mitc@example.com",
-      position: "UI/Ux",
-      status: "Offline" as const,
-      date: "5/27/15",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "7",
-      name: "Ronald Richards",
-      username: "@ronald",
-      email: "deanna.curtis@example.com",
-      position: "UI/Ux",
-      status: "Active" as const,
-      date: "7/11/19",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "8",
-      name: "Devon Lane",
-      username: "@devon",
-      email: "alma.lawson@example.com",
-      position: "UI/Ux",
-      status: "Wait" as const,
-      date: "9/23/16",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "9",
-      name: "Jerome Bell",
-      username: "@jerome",
-      email: "tanya.hill@example.com",
-      position: "UI/Ux",
-      status: "Wait" as const,
-      date: "8/2/19",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-  ]
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useEmployee] Raw API response:', response);
+    }
 
-  // Filter data based on search and status
-  let filteredData = mockData
+    // Handle different response structures
+    let employees: any[] = [];
 
-  if (filters.search) {
-    filteredData = filteredData.filter(
-      (employee) =>
-        employee.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        employee.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-        employee.username.toLowerCase().includes(filters.search.toLowerCase()),
-    )
+    if (response && response.data && Array.isArray(response.data)) {
+      // Response format: {data: Array(15)}
+      employees = response.data;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useEmployee] Found data property with array:', employees.length, 'employees');
+      }
+    } else if (Array.isArray(response)) {
+      // Direct array response
+      employees = response;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useEmployee] Direct array response:', employees.length, 'employees');
+      }
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useEmployee] Unknown response format:', response);
+      }
+      employees = [];
+    }
+
+    // Apply filters if needed
+    let filteredEmployees: any[] = employees;
+    
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filteredEmployees = employees.filter((emp: any) =>
+        emp.firstName?.toLowerCase().includes(searchTerm) ||
+        emp.lastName?.toLowerCase().includes(searchTerm) ||
+        emp.email?.toLowerCase().includes(searchTerm) ||
+        emp.name?.toLowerCase().includes(searchTerm) ||
+        emp.role?.toLowerCase().includes(searchTerm) ||
+        emp.position?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (filters.status && filters.status !== 'all') {
+      filteredEmployees = filteredEmployees.filter((emp: any) => {
+        if (filters.status === 'active') {
+          return emp.isActive === true || emp.employmentStatus === 'active';
+        } else if (filters.status === 'inactive') {
+          return emp.isActive === false || emp.employmentStatus === 'inactive';
+        }
+        return emp.employmentStatus === filters.status;
+      });
+    }
+
+    // Transform to frontend format matching Employee interface
+    const transformedEmployees: Employee[] = filteredEmployees.map((emp: any): Employee => {
+      const isActive = emp.isActive !== undefined ? emp.isActive : true;
+      const dateValue = emp.startDate || emp.hireDate;
+
+      const employee: Employee = {
+        id: emp._id || emp.id,
+        _id: emp._id,
+        firstName: emp.firstName || '',
+        lastName: emp.lastName || '',
+        email: emp.email || '',
+        role: emp.role || 'user',
+        isActive: isActive,
+        name: `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.name || 'N/A',
+        username: `@${emp.firstName?.toLowerCase() || 'user'}`,
+        phone: emp.phone,
+        position: emp.position || emp.employee?.position,
+        status: isActive ? "Active" as const : "Offline" as const,
+        avatar: emp.image || emp.avatar,
+        image: emp.image,
+        startDate: emp.startDate,
+        hireDate: emp.hireDate,
+        createdAt: emp.createdAt,
+        updatedAt: emp.updatedAt,
+        employee: emp.employee
+      };
+
+      // Only add date if it exists
+      if (dateValue) {
+        employee.date = new Date(dateValue).toLocaleDateString();
+      }
+
+      return employee;
+    });
+
+    // Apply pagination
+    const startIndex = (filters.page - 1) * filters.limit;
+    const endIndex = startIndex + filters.limit;
+    const paginatedData = transformedEmployees.slice(startIndex, endIndex);
+
+    return {
+      data: paginatedData,
+      total: transformedEmployees.length,
+      page: filters.page,
+      limit: filters.limit,
+    };
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    // Return empty result on error
+    return {
+      data: [],
+      total: 0,
+      page: filters.page,
+      limit: filters.limit,
+    };
   }
-
-  if (filters.status && filters.status !== "all") {
-    filteredData = filteredData.filter((employee) => employee.status.toLowerCase() === filters.status.toLowerCase())
-  }
-
-  // Pagination
-  const startIndex = (filters.page - 1) * filters.limit
-  const endIndex = startIndex + filters.limit
-  const paginatedData = filteredData.slice(startIndex, endIndex)
-
-  return {
-    data: paginatedData,
-    total: filteredData.length,
-    page: filters.page,
-    limit: filters.limit,
-  }
-}
+};
 
 export const useGetEmployees = (filters: EmployeeFilters) => {
   return useQuery({
     queryKey: ["employees", filters],
-    queryFn: () => empApi.getEmp(),
+    queryFn: () => fetchEmployees(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   })
 }
 
-export const useAddEmployee = ()=>{
+export const useAddEmployee = () => {
   const toast = useToast()
   return useMutation({
-    mutationFn: (payload : createEmpPayload)=>empApi.createEmp(payload),
-    onSuccess: (data : any) =>{
-      // Handle success - could show toast or redirect
-    },onError:(err : any)=>{
-      toast.error("Oh ops!" , HandleError(err))
+    mutationFn: (payload: createEmpPayload) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useAddEmployee] Starting mutation with payload:', payload);
+      }
+      return empApi.createEmp(payload);
+    },
+    onSuccess: (data: any) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useAddEmployee] Success callback triggered:', data);
+      }
+      toast.success("Success!", "Employee created successfully")
+    },
+    onError: (err: any) => {
+      console.error('[useAddEmployee] Error callback triggered:', err);
+      toast.error("Error", HandleError(err))
     }
   })
 }
+
+// Mock hooks for projects and managers (until real implementations are available)
+export const useGetProjects = (): Array<{ id: string; name: string }> => ([
+  { id: '1', name: 'Project Alpha' },
+  { id: '2', name: 'Project Beta' }
+]);
+
+export const useGetManagers = (): Array<{ id: string; name: string }> => ([
+  { id: '1', name: 'John Manager' },
+  { id: '2', name: 'Jane Supervisor' }
+]);

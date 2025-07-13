@@ -14,8 +14,10 @@ export class UserRepository extends BaseMongoRepository<User> {
     super(userModel);
   }
 
-  async findUserByEmail(email: string, throwError = true): Promise<UserDocument> {
-    const user = await this.userModel.findOne({ email });
+  async findUserByEmail(email: string, throwError = true, includeInactive = false): Promise<UserDocument> {
+    // By default, only find active users unless explicitly requested to include inactive ones
+    const filter = includeInactive ? { email } : { email, isActive: true };
+    const user = await this.userModel.findOne(filter);
     if (!user && throwError) {
       throw new Error('User not found');
     }

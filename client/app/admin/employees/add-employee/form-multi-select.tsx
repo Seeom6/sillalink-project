@@ -41,9 +41,7 @@ export default function FormMultiSelect({
     onChange(value.filter(v => v !== optionValue))
   }
 
-  const getSelectedLabels = () => {
-    return value.map(v => options.find(opt => opt.value === v)?.label || v)
-  }
+
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -55,15 +53,19 @@ export default function FormMultiSelect({
       {/* Selected items display */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
-          {getSelectedLabels().map((label, index) => (
-            <Badge key={value[index]} variant="secondary" className="flex items-center gap-1">
-              {label}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                onClick={() => handleRemove(value[index])}
-              />
-            </Badge>
-          ))}
+          {value.map((selectedValue) => {
+            const option = options.find(opt => opt.value === selectedValue);
+            const label = option?.label || selectedValue;
+            return (
+              <Badge key={selectedValue} variant="secondary" className="flex items-center gap-1">
+                {label}
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-red-500"
+                  onClick={() => handleRemove(selectedValue)}
+                />
+              </Badge>
+            );
+          })}
         </div>
       )}
 

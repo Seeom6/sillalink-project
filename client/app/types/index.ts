@@ -16,22 +16,4 @@ export  interface Service {
   }
   
 
-  export interface Employee {
-    id: string;
-    name: string;
-    email: string;
-    position: string;
-    department: string;
-    joinDate: string;
-  }
-  
-  export type EmployeeFormData = Omit<Employee, "id">;
-  
-  export interface EmployeeTableProps {
-    employees: Employee[];
-    onAdd: (employee: EmployeeFormData) => void;
-    onUpdate: (id: string, employee: EmployeeFormData) => void;
-    onDelete: (id: string) => void;
-    isLoading?: boolean;
-    error?: string | null;
-  }
+  // Employee types moved to client/app/types/employeeTypes.tsx

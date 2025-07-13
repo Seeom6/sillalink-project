@@ -9,7 +9,7 @@ export const nestConfig = (app: NestExpressApplication) => {
         origin: ['http://localhost:3000', 'http://localhost:3001'],
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
         credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Pragma'],
     });
     // Global rate limiting
     app.use(rateLimit({
@@ -48,6 +48,21 @@ export const nestConfig = (app: NestExpressApplication) => {
             retryAfter: '15 minutes'
         }
     }));
+    // Disable ETags to prevent 304 responses for dynamic data
+    app.set('etag', false);
+
+    // Add global middleware to prevent caching of API responses
+    app.use('/api', (req, res, next) => {
+        // Set cache control headers for all API routes
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Last-Modified': new Date().toUTCString()
+        });
+        next();
+    });
+
     app.use(morgan("dev"))
     app.use(cookieParser())
     app.setGlobalPrefix(`api/${configService.get("app.version")}`)

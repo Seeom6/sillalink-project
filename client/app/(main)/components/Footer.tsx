@@ -70,7 +70,8 @@ const Footer: React.FC = () => {
                   alt="Sillalink Logo"
                   width={120}
                   height={40}
-                  className="h-10 w-auto"
+                  className="w-auto"
+                  style={{ height: 'auto' }}
                   priority
                 />
               </Link>
@@ -123,7 +124,8 @@ const Footer: React.FC = () => {
                   alt="Sillalink Logo"
                   width={120}
                   height={40}
-                  className="h-10 w-auto"
+                  className="w-auto"
+                  style={{ height: 'auto' }}
                   priority
                 />
               </Link>

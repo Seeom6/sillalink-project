@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/app/hooks/useToast';
-import { globalEvents, EVENTS } from '@/app/utils/eventEmitter';
+import { globalEvents, EVENTS } from '@/app/utils/events';
 import {
   Technology,
   TechnologyFilters,

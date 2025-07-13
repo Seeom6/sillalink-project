@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react"
 import { MoreHorizontal, Info, Trash2, Calendar, Users, DollarSign } from "lucide-react"
-import { useGetProjects, useDeleteProject, useBulkDeleteProjects } from "@/app/hooks/project/useProject"
+import { useProjects, useProjectActions } from "@/app/hooks/project/useProject"
 import { AdminProject } from "@/app/types/adminProjectTypes"
 import { ProjectStatusBadge } from "./ProjectStatusBadge"
 import { ProjectPriorityBadge } from "./ProjectPriorityBadge"
@@ -51,9 +51,8 @@ export const ProjectsTable = ({
   const [selectedProjects, setSelectedProjects] = useState<string[]>([])
 
   // Use React Query with proper authentication handling
-  const { data: projects, isLoading, error, refetch } = useGetProjects(filters)
-  const { mutate: deleteProject } = useDeleteProject()
-  const { mutate: bulkDeleteProjects } = useBulkDeleteProjects()
+  const { data: projects, isLoading, error, refetch } = useProjects(filters)
+  const { deleteProject, bulkDeleteProjects } = useProjectActions()
 
   // Handle authentication errors
   useEffect(() => {

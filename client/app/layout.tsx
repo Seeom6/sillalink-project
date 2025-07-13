@@ -25,7 +25,9 @@ export const metadata: Metadata = {
     "IT consulting"
   ],
   icons: {
-    icon: "/Silla-Link-compnay.svg"
+    icon: "/Silla-Link-compnay.svg",
+    shortcut: "/Silla-Link-compnay.svg",
+    apple: "/Silla-Link-compnay.svg"
   },
   openGraph: {
     title: "SillaLink Company | Innovative Software Solutions",

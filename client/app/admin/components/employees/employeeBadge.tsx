@@ -43,3 +43,49 @@ export const StatusBadge = memo(({ status }: StatusBadgeProps) => {
 })
 
 StatusBadge.displayName = "StatusBadge"
+
+interface RoleBadgeProps {
+  role: "admin" | "operator" | "employee" | "user" | string
+}
+
+export const RoleBadge = memo(({ role }: RoleBadgeProps) => {
+  const getRoleConfig = (role: string) => {
+    switch (role.toLowerCase()) {
+      case "admin":
+        return {
+          color: "bg-red-100 text-red-800",
+          label: "Admin",
+        }
+      case "operator":
+        return {
+          color: "bg-blue-100 text-blue-800",
+          label: "Operator",
+        }
+      case "employee":
+        return {
+          color: "bg-green-100 text-green-800",
+          label: "Employee",
+        }
+      case "user":
+        return {
+          color: "bg-gray-100 text-gray-800",
+          label: "User",
+        }
+      default:
+        return {
+          color: "bg-purple-100 text-purple-800",
+          label: role.charAt(0).toUpperCase() + role.slice(1),
+        }
+    }
+  }
+
+  const config = getRoleConfig(role)
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+      {config.label}
+    </span>
+  )
+})
+
+RoleBadge.displayName = "RoleBadge"

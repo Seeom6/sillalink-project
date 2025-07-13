@@ -9,7 +9,7 @@ export default function ProjectsPage() {
   const router = useRouter()
 
   const handleAddProject = () => {
-    router.push('/admin/projects/add-project')
+    router.push('/admin/projects/add')
   }
 
   return (

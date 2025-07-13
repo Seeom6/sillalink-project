@@ -41,8 +41,35 @@ const schema = z.object({
     salary: salarySchema
 })
 
+// Update schema - password is optional for updates
+const updateSchema = z.object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(6, "Password must be at least 6 characters").optional(), // ✅ Optional for updates
+    position: z.string().min(1, "Position is required"),
+    image: z.string().optional(),
+    // Additional fields
+    department: z.string().optional(),
+    hireDate: z.string().optional(),
+    phone: z.string().optional(),
+    employmentStatus: z.enum(['full-time', 'part-time', 'contractor', 'intern']).optional(),
+    role: z.enum(['user', 'admin', 'operator', 'employee']).optional(),
+    managerId: z.string().optional(),
+    projectIds: z.array(z.string()).optional(),
+    emergencyContact: emergencyContactSchema,
+    address: addressSchema,
+    salary: salarySchema
+})
+
 export class CreateEmployeeValidation extends BaseValidationPipe {
     constructor(){
         super(schema)
+    }
+}
+
+export class UpdateEmployeeValidation extends BaseValidationPipe {
+    constructor(){
+        super(updateSchema)
     }
 }

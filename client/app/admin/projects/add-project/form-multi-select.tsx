@@ -36,12 +36,7 @@ export default function FormMultiSelect({
     onChange(values.filter(v => v !== valueToRemove))
   }
 
-  const getSelectedLabels = () => {
-    return values.map(value => {
-      const option = options.find(opt => opt.value === value)
-      return option ? option.label : value
-    })
-  }
+
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -61,24 +56,28 @@ export default function FormMultiSelect({
             <span className="text-gray-500">{placeholder}</span>
           ) : (
             <div className="flex flex-wrap gap-1">
-              {getSelectedLabels().map((label, index) => (
-                <span
-                  key={values[index]}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded"
-                >
-                  {label}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleRemoveValue(values[index])
-                    }}
-                    className="hover:bg-blue-200 rounded"
+              {values.map((selectedValue) => {
+                const option = options.find(opt => opt.value === selectedValue);
+                const label = option?.label || selectedValue;
+                return (
+                  <span
+                    key={selectedValue}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
+                    {label}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveValue(selectedValue)
+                      }}
+                      className="hover:bg-blue-200 rounded"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                );
+              })}
             </div>
           )}
           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

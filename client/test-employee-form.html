@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Creation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .test-data { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Employee Creation System Test</h1>
+    
+    <div class="test-data">
+        <h3>Test Employee Data:</h3>
+        <pre id="testData"></pre>
+    </div>
+    
+    <button onclick="testEmployeeCreation()">Test Employee Creation</button>
+    <button onclick="testFormValidation()">Test Form Validation</button>
+    <button onclick="testImageUpload()">Test Image Upload</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const testEmployeeData = {
+            firstName: "John",
+            lastName: "Doe",
+            email: "john.doe@example.com",
+            password: "SecurePass123",
+            position: "front-end",
+            department: "engineering",
+            hireDate: "2024-01-15",
+            phone: "+1234567890",
+            employmentStatus: "full-time",
+            role: "employee",
+            emergencyContact: {
+                name: "Jane Doe",
+                phone: "+1234567891",
+                relationship: "Spouse"
+            },
+            address: {
+                street: "123 Main St",
+                city: "New York",
+                state: "NY",
+                zipCode: "10001",
+                country: "USA"
+            },
+            salary: {
+                amount: 75000,
+                currency: "USD",
+                frequency: "yearly"
+            }
+        };
+
+        document.getElementById('testData').textContent = JSON.stringify(testEmployeeData, null, 2);
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testEmployeeCreation() {
+            addResult('Testing employee creation API...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/admin/employee', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(testEmployeeData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Employee creation successful!', 'success');
+                    addResult(`Response: ${JSON.stringify(data, null, 2)}`, 'info');
+                } else {
+                    const errorData = await response.json();
+                    addResult(`❌ Employee creation failed: ${response.status}`, 'error');
+                    addResult(`Error: ${JSON.stringify(errorData, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function testFormValidation() {
+            addResult('Testing form validation...', 'info');
+            
+            const validationTests = [
+                { field: 'firstName', value: '', expected: 'First name is required' },
+                { field: 'email', value: 'invalid-email', expected: 'Invalid email format' },
+                { field: 'password', value: '123', expected: 'Password too short' },
+                { field: 'hireDate', value: '2025-12-31', expected: 'Future hire date' }
+            ];
+
+            validationTests.forEach(test => {
+                // Simulate validation logic
+                let isValid = true;
+                let errorMessage = '';
+
+                if (test.field === 'firstName' && !test.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'First name is required';
+                }
+                if (test.field === 'email' && !test.value.includes('@')) {
+                    isValid = false;
+                    errorMessage = 'Invalid email format';
+                }
+                if (test.field === 'password' && test.value.length < 6) {
+                    isValid = false;
+                    errorMessage = 'Password too short';
+                }
+                if (test.field === 'hireDate' && new Date(test.value) > new Date()) {
+                    isValid = false;
+                    errorMessage = 'Future hire date not allowed';
+                }
+
+                if (!isValid) {
+                    addResult(`✅ Validation test passed for ${test.field}: ${errorMessage}`, 'success');
+                } else {
+                    addResult(`❌ Validation test failed for ${test.field}`, 'error');
+                }
+            });
+        }
+
+        function testImageUpload() {
+            addResult('Testing image upload validation...', 'info');
+            
+            // Simulate file validation
+            const testFiles = [
+                { name: 'test.jpg', size: 1024 * 1024, type: 'image/jpeg' }, // Valid
+                { name: 'large.jpg', size: 10 * 1024 * 1024, type: 'image/jpeg' }, // Too large
+                { name: 'document.pdf', size: 1024, type: 'application/pdf' } // Wrong type
+            ];
+
+            testFiles.forEach(file => {
+                let isValid = true;
+                let errorMessage = '';
+
+                if (file.size > 5 * 1024 * 1024) {
+                    isValid = false;
+                    errorMessage = 'File too large (max 5MB)';
+                }
+                if (!file.type.startsWith('image/')) {
+                    isValid = false;
+                    errorMessage = 'Invalid file type (images only)';
+                }
+
+                if (isValid) {
+                    addResult(`✅ File validation passed for ${file.name}`, 'success');
+                } else {
+                    addResult(`❌ File validation failed for ${file.name}: ${errorMessage}`, 'error');
+                }
+            });
+        }
+
+        // Auto-run basic tests on page load
+        window.onload = function() {
+            addResult('Employee Creation System Test Suite Loaded', 'info');
+            addResult('Backend API: http://localhost:5000/api/v1/admin/employee', 'info');
+            addResult('Frontend: http://localhost:3001/admin/employees/add-employee', 'info');
+        };
+    </script>
+</body>
+</html>

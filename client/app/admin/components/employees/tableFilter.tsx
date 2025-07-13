@@ -18,33 +18,31 @@ export const TableFilters = memo(({ search, status, onSearchChange, onStatusChan
   return (
     <div className="flex items-center justify-between gap-4 mb-6">
       <div className="flex items-center gap-4 flex-1 ">
-        <div className="relative max-w-sm">
-          <Search className="absolute  left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search"
+            placeholder="Search employees..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 bg-dashboard"
+            className="pl-10"
           />
         </div>
-
         <Select value={status} onValueChange={onStatusChange}>
-          <SelectTrigger className="w-32">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filter" />
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-            <SelectItem value="wait">Wait</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
           </SelectContent>
         </Select>
       </div>
-
-      <Button onClick={onAddUser} className="bg-purple-600 rounded-lg hover:bg-purple-700">
-        <Plus className="w-4 h-4 mr-2" />
-        Add user
+      <Button onClick={onAddUser} className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Add Employee
       </Button>
     </div>
   )

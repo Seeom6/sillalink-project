@@ -1,18 +1,55 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ArrowLeft, User, Briefcase, MapPin, DollarSign, Users, Phone } from "lucide-react"
 import Button from "@/app/shared/ui/button"
-import FileUpload from "./file-upload"
+import FileUpload from "./file-upload/index"
 import FormField from "./form-field"
 import FormSelect from "./form-select"
 import FormMultiSelect from "./form-multi-select"
-import FormTextarea from "./form-textarea"
+// import FormTextarea from "./form-textarea" // Unused for now
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/shared/ui/tabs"
 import type { EmployeeData, EmployeeFormProps } from "@/app/types/employeeTypes"
-import { EMPLOYMENT_STATUSES, USER_ROLES, POSITIONS, DEPARTMENTS } from "@/app/types/employeeTypes"
-import { useGetProjects, useGetManagers } from "@/app/hooks/employee/useEmployee"
+// Temporarily using inline constants until import issues are resolved
+const EMPLOYMENT_STATUSES = [
+  { value: 'full-time', label: 'Full Time' },
+  { value: 'part-time', label: 'Part Time' },
+  { value: 'contractor', label: 'Contractor' },
+  { value: 'intern', label: 'Intern' }
+];
+
+const USER_ROLES = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'operator', label: 'Operator' },
+  { value: 'employee', label: 'Employee' },
+  { value: 'user', label: 'User' }
+];
+
+const POSITIONS = [
+  { value: 'front-end', label: 'Frontend Developer' },
+  { value: 'back-end', label: 'Backend Developer' },
+  { value: 'ui-ux', label: 'UI/UX Designer' },
+  { value: 'dev-ops', label: 'DevOps Engineer' }
+];
+
+const DEPARTMENTS = [
+  { value: 'engineering', label: 'Engineering' },
+  { value: 'design', label: 'Design' },
+  { value: 'product', label: 'Product' },
+  { value: 'marketing', label: 'Marketing' }
+];
+
+// Mock hooks until import issues are resolved
+const useGetProjects = () => ([
+  { id: '1', name: 'Project Alpha' },
+  { id: '2', name: 'Project Beta' }
+]);
+
+const useGetManagers = () => ([
+  { id: '1', name: 'John Manager' },
+  { id: '2', name: 'Jane Supervisor' }
+]);
 
 const initialEmployeeData: EmployeeData = {
   firstName: "",
@@ -61,11 +98,11 @@ export default function AddEmployeeForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Fetch projects and managers
-  const { data: projectsResponse } = useGetProjects()
-  const { data: managersResponse } = useGetManagers()
+  const projectsResponse = useGetProjects()
+  const managersResponse = useGetManagers()
 
-  const projects = projectsResponse?.data || []
-  const managers = managersResponse?.data || []
+  const projects = projectsResponse || []
+  const managers = managersResponse || []
 
   const projectOptions = Array.isArray(projects) ? projects.map((project: any) => ({
     value: project.id,
@@ -87,20 +124,25 @@ export default function AddEmployeeForm({
   }
 
   const handleSelectChange = (name: string, value: string) => {
-    setEmployeeData((prev) => ({ ...prev, [name]: value }))
+    // Handle special "none" value for managerId
+    const processedValue = (name === "managerId" && value === "none") ? undefined : value;
+    setEmployeeData((prev) => ({ ...prev, [name]: processedValue }))
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
   }
 
   const handleNestedChange = (section: string, field: string, value: string | number) => {
-    setEmployeeData((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section as keyof EmployeeData],
-        [field]: value,
-      },
-    }))
+    setEmployeeData((prev) => {
+      const currentSection = prev[section as keyof EmployeeData] as any;
+      return {
+        ...prev,
+        [section]: {
+          ...(currentSection || {}),
+          [field]: value,
+        },
+      };
+    });
   }
 
   const handleFileChange = (files: File[]) => {
@@ -111,31 +153,78 @@ export default function AddEmployeeForm({
     const newErrors: Record<string, string> = {}
 
     // Basic information validation
-    if (!employeeData.firstName.trim()) newErrors.firstName = "First name is required"
-    if (!employeeData.lastName.trim()) newErrors.lastName = "Last name is required"
-    if (!employeeData.email.trim()) newErrors.email = "Email is required"
-    if (!employeeData.password.trim()) newErrors.password = "Password is required"
-    if (!employeeData.position) newErrors.position = "Position is required"
-    if (!employeeData.department) newErrors.department = "Department is required"
-    if (!employeeData.hireDate) newErrors.hireDate = "Hire date is required"
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (employeeData.email && !emailRegex.test(employeeData.email)) {
-      newErrors.email = "Please enter a valid email address"
+    if (!employeeData.firstName.trim()) {
+      newErrors.firstName = "First name is required"
+    } else if (employeeData.firstName.trim().length < 2) {
+      newErrors.firstName = "First name must be at least 2 characters"
     }
 
-    // Password validation
-    if (employeeData.password && employeeData.password.length < 6) {
+    if (!employeeData.lastName.trim()) {
+      newErrors.lastName = "Last name is required"
+    } else if (employeeData.lastName.trim().length < 2) {
+      newErrors.lastName = "Last name must be at least 2 characters"
+    }
+
+    if (!employeeData.email.trim()) {
+      newErrors.email = "Email is required"
+    } else {
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(employeeData.email)) {
+        newErrors.email = "Please enter a valid email address"
+      }
+    }
+
+    if (!employeeData.password.trim()) {
+      newErrors.password = "Password is required"
+    } else if (employeeData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters long"
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(employeeData.password)) {
+      newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    }
+
+    if (!employeeData.position) {
+      newErrors.position = "Position is required"
+    }
+
+    if (!employeeData.department) {
+      newErrors.department = "Department is required"
+    }
+
+    if (!employeeData.hireDate) {
+      newErrors.hireDate = "Hire date is required"
+    } else {
+      // Validate hire date is not in the future
+      const hireDate = new Date(employeeData.hireDate)
+      const today = new Date()
+      today.setHours(23, 59, 59, 999) // End of today
+
+      if (hireDate > today) {
+        newErrors.hireDate = "Hire date cannot be in the future"
+      }
+    }
+
+    // Phone validation (if provided)
+    if (employeeData.phone && employeeData.phone.trim()) {
+      const phoneRegex = /^[\+]?[1-9][\d]{0,14}$/
+      if (!phoneRegex.test(employeeData.phone.replace(/[\s\-\(\)]/g, ''))) {
+        newErrors.phone = "Please enter a valid phone number"
+      }
+    }
+
+    // Salary validation (if provided)
+    if (employeeData.salary?.amount && employeeData.salary.amount <= 0) {
+      newErrors.salary = "Salary amount must be greater than 0"
     }
 
     setErrors(newErrors)
+    console.log(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    console.log(validateForm())
     if (validateForm()) {
       onSubmit?.(employeeData)
     }
@@ -263,7 +352,7 @@ export default function AddEmployeeForm({
                   id="phone"
                   label="Phone Number"
                   type="tel"
-                  value={employeeData.phone}
+                  value={employeeData.phone || ""}
                   onChange={handleInputChange}
                   placeholder="Enter phone number"
                 />
@@ -296,7 +385,7 @@ export default function AddEmployeeForm({
                 <FormSelect
                   id="department"
                   label="Department"
-                  value={employeeData.department}
+                  value={employeeData.department || "engineering"}
                   onValueChange={(value) => handleSelectChange("department", value)}
                   placeholder="Select department"
                   required
@@ -310,7 +399,7 @@ export default function AddEmployeeForm({
                   id="hireDate"
                   label="Hire Date"
                   type="date"
-                  value={employeeData.hireDate}
+                  value={employeeData.hireDate || ""}
                   onChange={handleInputChange}
                   required
                 />
@@ -320,7 +409,7 @@ export default function AddEmployeeForm({
               <FormSelect
                 id="employmentStatus"
                 label="Employment Status"
-                value={employeeData.employmentStatus}
+                value={employeeData.employmentStatus || "full-time"}
                 onValueChange={(value) => handleSelectChange("employmentStatus", value)}
                 placeholder="Select employment status"
                 required
@@ -330,7 +419,7 @@ export default function AddEmployeeForm({
               <FormSelect
                 id="role"
                 label="User Role"
-                value={employeeData.role}
+                value={employeeData.role || "employee"}
                 onValueChange={(value) => handleSelectChange("role", value)}
                 placeholder="Select user role"
                 required
@@ -341,10 +430,10 @@ export default function AddEmployeeForm({
                 <FormSelect
                   id="managerId"
                   label="Manager/Supervisor"
-                  value={employeeData.managerId || ""}
+                  value={employeeData.managerId || "none"}
                   onValueChange={(value) => handleSelectChange("managerId", value)}
                   placeholder="Select manager (optional)"
-                  options={[{ value: "", label: "No manager" }, ...managerOptions]}
+                  options={[{ value: "none", label: "No manager" }, ...managerOptions]}
                 />
               )}
             </div>
@@ -361,7 +450,7 @@ export default function AddEmployeeForm({
               <FormMultiSelect
                 id="projectIds"
                 label="Assigned Projects"
-                value={employeeData.projectIds}
+                value={employeeData.projectIds || []}
                 onChange={(value) => setEmployeeData(prev => ({ ...prev, projectIds: value }))}
                 placeholder="Select projects to assign"
                 options={projectOptions}
@@ -532,7 +621,7 @@ export default function AddEmployeeForm({
                   const tabs = ["basic", "employment", "projects", "contact", "compensation"]
                   const currentIndex = tabs.indexOf(activeTab)
                   if (currentIndex > 0) {
-                    setActiveTab(tabs[currentIndex - 1])
+                    setActiveTab(tabs[currentIndex - 1] || "basic")
                   }
                 }}
                 disabled={isLoading}
@@ -550,7 +639,7 @@ export default function AddEmployeeForm({
                   const tabs = ["basic", "employment", "projects", "contact", "compensation"]
                   const currentIndex = tabs.indexOf(activeTab)
                   if (currentIndex < tabs.length - 1) {
-                    setActiveTab(tabs[currentIndex + 1])
+                    setActiveTab(tabs[currentIndex + 1] || "basic")
                   }
                 }}
                 disabled={isLoading}

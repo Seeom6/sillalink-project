@@ -86,4 +86,17 @@ export abstract class BaseMongoRepository<V>
       lean: true,
     }) as VDocument<V>;
   }
+
+  async findOneAndDelete({
+    filter,
+    options,
+  }: {
+    filter: mongoose.FilterQuery<VDocument<V>>;
+    options?: mongoose.QueryOptions<VDocument<V>>;
+  }): Promise<VDocument<V>> {
+    return await this.entityModel.findOneAndDelete(filter, {
+      ...options,
+      lean: true,
+    }) as VDocument<V>;
+  }
 }

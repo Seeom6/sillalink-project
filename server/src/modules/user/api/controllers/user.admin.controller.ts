@@ -1,4 +1,4 @@
-import {Body, Get, Param, Patch, Post, Query} from '@nestjs/common';
+import {Body, Get, Param, Patch, Post, Query, Res} from '@nestjs/common';
 import {AuthControllerAdmin, Pagination, AllowRole, parseQuery} from 'src/package/api';
 import { CreateUserDto } from '../dto/request/create-user.dto';
 import {User, UserRole, UserService} from "@Modules/user"
@@ -38,12 +38,25 @@ export class UserAdminController {
    // }
 
    @Patch(":id")
-   async updateUser(){
-      
+   async updateUser(@Param('id') id: string, @Body() updateData: any){
+      console.log('🚀 USER CONTROLLER: Updating user', id, 'with data:', updateData);
+
+      // Use the new updateUserById method that handles employee data
+      const updatedUser = await this.UserService.updateUserById(id, updateData);
+      console.log('✅ USER CONTROLLER: User updated successfully');
+
+      return updatedUser;
    }
 
    @Get(":id")
-   async getById(@Param('id') id:string){
+   async getById(@Param('id') id:string, @Res({ passthrough: true }) res: any){
+      // Add cache control headers to prevent caching of user data
+      res.set({
+         'Cache-Control': 'no-cache, no-store, must-revalidate',
+         'Pragma': 'no-cache',
+         'Expires': '0'
+      });
+
       return await this.UserService.findById(id);
    }
 }

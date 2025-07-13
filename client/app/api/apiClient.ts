@@ -15,6 +15,17 @@ apiClient.interceptors.request.use(async (config) => {
   if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
     config.headers = await SecurityUtils.addCSRFHeader(config.headers || {});
   }
+
+  // Add cache control headers only for GET requests to prevent caching issues
+  // This is more selective and avoids CORS issues with other request types
+  if (config.method?.toLowerCase() === 'get') {
+    config.headers = {
+      ...config.headers,
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    };
+  }
+
   return config;
 }, (error) => {
   return Promise.reject(error);

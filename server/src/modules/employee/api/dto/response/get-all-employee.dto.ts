@@ -8,12 +8,12 @@ export class GetAllEmployeeDto {
   phone?: string;
   role: string;
   isActive: boolean;
-  position: PositionEnum;
+  position?: PositionEnum;
   department?: string;
   employmentStatus?: string;
-  image: string;
-  startDate: Date;
-  endDate: Date;
+  image?: string;
+  startDate?: Date;
+  endDate?: Date;
   managerId?: string;
   projectIds?: string[];
   id: string;
@@ -24,14 +24,15 @@ export class GetAllEmployeeDto {
     this.phone = users.phone
     this.role = users.role
     this.isActive = users.isActive
-    this.position = users.employee.position as PositionEnum;
-    this.department = users.employee.department
-    this.employmentStatus = users.employee.employmentStatus
-    this.image = users.employee.image
-    this.startDate = users.employee.startDate
-    this.endDate = users.employee.endDate ?? null
-    this.managerId = users.employee.managerId
-    this.projectIds = users.employee.projectIds
+    // Handle users without employee object (admin, operator, user roles)
+    this.position = users.employee?.position as PositionEnum || null;
+    this.department = users.employee?.department || null
+    this.employmentStatus = users.employee?.employmentStatus || null
+    this.image = users.employee?.image || null
+    this.startDate = users.employee?.startDate || null
+    this.endDate = users.employee?.endDate || null
+    this.managerId = users.employee?.managerId || null
+    this.projectIds = users.employee?.projectIds || []
     this.id = users._id.toString() ;
   }
 }

@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { ArrowLeft, FolderOpen, Calendar, DollarSign, Users, Building, Target } from "lucide-react"
 import Button from "@/app/shared/ui/button"
 import FileUpload from "./file-upload"
@@ -10,7 +9,6 @@ import FormSelect from "./form-select"
 import FormMultiSelect from "./form-multi-select"
 import FormTextarea from "./form-textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/shared/ui/tabs"
-import type { AdminProjectData, AdminProjectFormProps } from "@/app/types/adminProjectTypes"
 import { PROJECT_STATUSES, PROJECT_PRIORITIES, CURRENCIES } from "@/app/types/adminProjectTypes"
 import { useGetAvailableEmployees, useGetAvailableManagers } from "@/app/hooks/project/useProject"
 
@@ -52,20 +50,20 @@ export default function AddProjectForm({
   const [activeTab, setActiveTab] = useState("basic")
 
   // Fetch data for dropdowns
-  const { data: employees = [] } = useGetAvailableEmployees()
-  const { data: managers = [] } = useGetAvailableManagers()
+  const { employees = [] } = useGetAvailableEmployees()
+  const { managers = [] } = useGetAvailableManagers()
 
   const handleInputChange = (field: keyof AdminProjectData, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev: AdminProjectData) => ({
       ...prev,
       [field]: value,
     }))
-    
+
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
+    if (errors[field as string]) {
+      setErrors((prev: Record<string, string>) => ({
         ...prev,
-        [field]: "",
+        [field as string]: "",
       }))
     }
   }
