@@ -1,6 +1,6 @@
 export enum ErrorCode {
 
-  // auth
+  // auth-system (4000-4999)
   OTP_EXPIRED = 4001,
   INVALID_OTP = 4002,
   INVALID_CREDENTIALS = 4003,
@@ -16,11 +16,16 @@ export enum ErrorCode {
   REGISTRATION_DATA_EXPIRED = 4013,
   TOO_MANY_ATTEMPTS = 4014,
 
-  // user
+  // user-management (2000-2999)
   USER_NOT_FOUND = 2001,
   USER_ALREADY_EXISTS = 2002,
+  PHONE_ALREADY_EXISTS = 2003,
 
-  // project
+  // employee-management (3000-3999)
+  EMPLOYEE_NOT_FOUND = 3001,
+  EMPLOYEE_ALREADY_EXISTS = 3002,
+
+  // project-management (5000-5999)
   PROJECT_NOT_FOUND = 5001,
   PROJECT_ALREADY_EXISTS = 5002,
   INVALID_PROJECT_DATA = 5003,
@@ -28,25 +33,20 @@ export enum ErrorCode {
   MEMBER_ALREADY_EXISTS = 5005,
   MEMBER_NOT_FOUND = 5006,
 
-  // service
-  SERVICE_NOT_FOUND = 3001,
-  SERVICE_ALREADY_EXISTS = 3002,
+  // service-management (7000-7999)
+  SERVICE_NOT_FOUND = 7001,
+  SERVICE_ALREADY_EXISTS = 7002,
 
-  // employee
-  EMPLOYEE_NOT_FOUND = 2001,
-  EMPLOYEE_ALREADY_EXISTS = 2002,
-
-  // technology
+  // technology-management (6000-6999)
   TECHNOLOGY_NOT_FOUND = 6001,
   TECHNOLOGY_ALREADY_EXISTS = 6002,
   INVALID_PROFICIENCY_LEVEL = 6003,
   TECHNOLOGY_IN_USE = 6004,
 
-//   email
+  // email (60000-60999)
   MAIL_ERROR =  60001,
 
-//  validation
+  // validation (70000-70999)
   VALIDATION_ERROR = 70000
-
 
 }

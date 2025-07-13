@@ -1,5 +1,0 @@
-export * from "./logIn.dto"
-export * from "./reset-admin-password.admin"
-export * from "./singIn.dto"
-export * from "./verify-otp.dto"
-export * from "./register.dto"

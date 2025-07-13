@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserService } from '@Modules/user';
-import { UserRole } from '@Modules/user';
+import { UserService } from '@Modules/user-management';
+import { UserRole } from '@Modules/user-management';
 
 @Injectable()
 export class AdminVerificationGuard implements CanActivate {

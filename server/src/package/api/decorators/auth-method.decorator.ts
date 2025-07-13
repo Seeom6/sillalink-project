@@ -1,6 +1,6 @@
 import {applyDecorators, Delete, Get, Patch, Post, Put} from "@nestjs/common";
 import { AllowRole } from "@Package/api";
-import {UserRole} from "@Modules/user";
+import {UserRole} from "@Modules/user-management";
 
 export function PostPolicy(options: { path: string; role: UserRole[]}){
   return applyDecorators(

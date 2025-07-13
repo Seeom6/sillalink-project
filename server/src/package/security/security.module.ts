@@ -3,10 +3,10 @@ import { CSRFGuard } from './csrf.guard';
 import { RateLimitGuard } from './rate-limit.guard';
 import { AdminVerificationGuard } from './admin-verification.guard';
 import { RedisModule } from '@Package/cache';
-import { UserModule } from '@Modules/user';
+import { UserManagementModule } from '@Modules/user-management';
 
 @Module({
-  imports: [RedisModule, UserModule],
+  imports: [RedisModule, UserManagementModule],
   providers: [
     CSRFGuard,
     RateLimitGuard,

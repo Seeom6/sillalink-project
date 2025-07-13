@@ -26,14 +26,12 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@/components/*": ["./app/shared/components/*"],
-      "@/hooks/*": ["./app/shared/hooks/*"],
-      "@/lib/*": ["./app/lib/*"],
-      "@/types/*": ["./app/types/*"],
-      "@/utils/*": ["./app/shared/utils/*"],
-      "@/contexts/*": ["./contexts/*"]
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/app/*": ["./app/*"],
+      "@/public/*": ["./public/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "types/**/*.ts"],
   "exclude": ["node_modules"]
 }
