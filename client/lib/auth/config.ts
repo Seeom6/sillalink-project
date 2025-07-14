@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { authApi } from '@/lib/api/auth';
+import './types'; // Import type extensions
 
 export const authOptions: NextAuthOptions = {
   providers: [

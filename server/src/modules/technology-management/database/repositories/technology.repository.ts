@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BaseMongoRepository } from '@Package/database/mongodb';
-import { Technology, TechnologyDocument } from '../schemas/technology.schema';
+import { Technology, TechnologyDocument, TechnologyStatus } from '../schemas/technology.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -114,6 +114,91 @@ export class TechnologyRepository extends BaseMongoRepository<Technology> {
       expert: 0,
       featured: 0,
       avgProficiency: 0
+    };
+  }
+
+  async getAllTags(): Promise<string[]> {
+    const result = await this.technologyModel.aggregate([
+      { $match: { isDeleted: false } },
+      { $unwind: '$tags' },
+      { $group: { _id: '$tags' } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return result.map(item => item._id);
+  }
+
+  async bulkUpdateStatus(ids: string[], status: TechnologyStatus): Promise<void> {
+    await this.technologyModel.updateMany(
+      { _id: { $in: ids }, isDeleted: false },
+      { $set: { status, updatedAt: new Date() } }
+    );
+  }
+
+  async bulkDelete(ids: string[]): Promise<void> {
+    await this.technologyModel.updateMany(
+      { _id: { $in: ids } },
+      { $set: { isDeleted: true, deletedAt: new Date() } }
+    );
+  }
+
+  async findAllWithFiltersEnhanced(filters: any): Promise<{
+    technologies: TechnologyDocument[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const {
+      page = 1,
+      limit = 10,
+      category,
+      status,
+      search,
+      tags,
+      isFeatured,
+      difficultyLevel,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = filters;
+
+    const skip = (page - 1) * limit;
+    const query: any = { isDeleted: false };
+
+    // Build query filters
+    if (category) query.category = category;
+    if (status) query.status = status;
+    if (difficultyLevel) query.difficultyLevel = difficultyLevel;
+    if (isFeatured !== undefined) query.isFeatured = isFeatured;
+
+    if (tags && tags.length > 0) {
+      query.tags = { $in: tags };
+    }
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { longDescription: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+
+    // Build sort object
+    const sort: any = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    const [technologies, total] = await Promise.all([
+      this.technologyModel.find(query).skip(skip).limit(limit).sort(sort),
+      this.technologyModel.countDocuments(query)
+    ]);
+
+    return {
+      technologies,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
     };
   }
 }

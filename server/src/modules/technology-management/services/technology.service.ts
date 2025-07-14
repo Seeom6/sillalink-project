@@ -4,7 +4,7 @@ import { TechnologyError } from './technology.error';
 import { CreateTechnologyDto } from '../api/dto/request/create-technology.dto';
 import { UpdateTechnologyDto } from '../api/dto/request/update-technology.dto';
 import { GetAllTechnologiesDto } from '../api/dto/request/get-all-technologies.dto';
-import { TechnologyDocument } from '../database/schemas/technology.schema';
+import { TechnologyDocument, TechnologyCategory, TechnologyStatus } from '../database/schemas/technology.schema';
 import { ErrorCode } from '../../../common/error/error-code';
 
 @Injectable()
@@ -55,7 +55,7 @@ export class TechnologyService {
     limit: number;
     totalPages: number;
   }> {
-    return this.technologyRepository.findAllWithFilters(filters);
+    return this.technologyRepository.findAllWithFiltersEnhanced(filters);
   }
 
   async findById(id: string): Promise<TechnologyDocument> {
@@ -127,9 +127,62 @@ export class TechnologyService {
   async decrementProjectUsage(id: string): Promise<TechnologyDocument> {
     const technology = await this.findById(id);
     const newCount = Math.max(0, technology.projectsUsedIn - 1);
-    
-    return this.update(id, { 
+
+    return this.update(id, {
       projectsUsedIn: newCount
     } as any);
+  }
+
+  async getCategories(): Promise<{ value: string; label: string }[]> {
+    return Object.values(TechnologyCategory).map(category => ({
+      value: category,
+      label: category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')
+    }));
+  }
+
+  async getStatuses(): Promise<{ value: string; label: string }[]> {
+    return Object.values(TechnologyStatus).map(status => ({
+      value: status,
+      label: status.charAt(0).toUpperCase() + status.slice(1)
+    }));
+  }
+
+  async getAllTags(): Promise<string[]> {
+    return this.technologyRepository.getAllTags();
+  }
+
+  async bulkUpdateStatus(ids: string[], status: TechnologyStatus): Promise<void> {
+    await this.technologyRepository.bulkUpdateStatus(ids, status);
+  }
+
+  async bulkDelete(ids: string[]): Promise<void> {
+    await this.technologyRepository.bulkDelete(ids);
+  }
+
+  async duplicateTechnology(id: string, newName: string): Promise<TechnologyDocument> {
+    const originalTechnology = await this.findById(id);
+
+    // Check if new name already exists
+    const existingTechnology = await this.technologyRepository.findOne({
+      filter: { name: newName, isDeleted: false }
+    });
+
+    if (existingTechnology) {
+      this.technologyError.throw(ErrorCode.TECHNOLOGY_ALREADY_EXISTS);
+    }
+
+    // Create duplicate with new name
+    const duplicateData = {
+      ...originalTechnology.toObject(),
+      name: newName,
+      _id: undefined,
+      createdAt: undefined,
+      updatedAt: undefined,
+      isFeatured: false, // Reset featured status for duplicates
+      projectsUsedIn: 0, // Reset project usage count
+      lastUsed: undefined // Reset last used date
+    };
+
+    return this.technologyRepository.create({ doc: duplicateData });
   }
 }

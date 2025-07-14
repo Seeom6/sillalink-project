@@ -2,7 +2,9 @@
 
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { AdminSidebar } from './components/Sidebar';
+import { AdminHeader } from './components/AdminHeader';
 
 export default function AdminLayout({
   children,
@@ -11,6 +13,7 @@ export default function AdminLayout({
 }) {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
@@ -35,12 +38,24 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar will be added here */}
+    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800">
+      {/* Sidebar */}
+      <AdminSidebar className="flex-shrink-0" />
+
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header will be added here */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-          {children}
+        {/* Header */}
+        <AdminHeader
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          isSidebarOpen={sidebarOpen}
+          className="flex-shrink-0"
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-gray-800/30 via-slate-800/30 to-gray-700/30 p-6">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

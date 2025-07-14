@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getSession } from 'next-auth/react';
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1',
@@ -9,11 +10,29 @@ const apiClient = axios.create({
 });
 
 // Request interceptor for auth tokens
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth-token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      // First try to get token from NextAuth.js session
+      const session = await getSession();
+      if (session?.accessToken) {
+        config.headers.Authorization = `Bearer ${session.accessToken}`;
+        return config;
+      }
+
+      // Fallback to localStorage for backward compatibility
+      const token = localStorage.getItem('auth-token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.warn('Failed to get session token:', error);
+
+      // Fallback to localStorage
+      const token = localStorage.getItem('auth-token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
   }
   return config;
@@ -41,7 +60,11 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Handle unauthorized access
       if (typeof window !== 'undefined') {
+        // Clear localStorage token
         localStorage.removeItem('auth-token');
+
+        // For NextAuth.js, we should redirect to the sign-in page
+        // The NextAuth.js session will be handled automatically
         window.location.href = '/auth/login';
       }
     }
