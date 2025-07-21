@@ -79,6 +79,8 @@ const TechnologyCard: React.FC<TechnologyCardProps> = ({
   onEdit,
   onDelete
 }) => {
+  // Get the correct ID - use _id if available, otherwise use id
+  const technologyId = technology._id || technology.id;
   const [imageError, setImageError] = React.useState(false);
   const imageUrl = getValidImageUrl(technology.image) || getValidImageUrl(technology.icon);
   const getStatusColor = (status: string) => {
@@ -368,17 +370,20 @@ export const TechnologyGrid: React.FC<TechnologyGridProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {technologies.map((technology, index) => (
-            <TechnologyCard
-              key={technology._id || `technology-${index}`}
-              technology={technology}
-              isSelected={selectedIds.includes(technology._id)}
-              onSelect={(selected) => onSelect(technology._id, selected)}
-              onView={() => onView(technology)}
-              onEdit={() => onEdit(technology)}
-              onDelete={() => onDelete(technology._id)}
-            />
-          ))}
+          {technologies.map((technology, index) => {
+            const technologyId = technology._id || technology.id;
+            return (
+              <TechnologyCard
+                key={technologyId || `technology-${index}`}
+                technology={technology}
+                isSelected={selectedIds.includes(technologyId || technology._id)}
+                onSelect={(selected) => onSelect(technologyId || technology._id, selected)}
+                onView={() => onView(technology)}
+                onEdit={() => onEdit(technology)}
+                onDelete={() => onDelete(technologyId || technology._id)}
+              />
+            );
+          })}
         </div>
       )}
 

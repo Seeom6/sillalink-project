@@ -26,11 +26,17 @@ export default function CreateTechnologyPage() {
       const newTechnology = await createTechnology.mutateAsync(data);
 
       // If there's an image file, upload it
-      if (imageFile && newTechnology._id) {
-        await uploadImage.mutateAsync({
-          id: newTechnology._id,
-          file: imageFile
-        });
+      const technologyId = newTechnology._id || newTechnology.id;
+      if (imageFile && technologyId) {
+        try {
+          await uploadImage.mutateAsync({
+            id: technologyId,
+            file: imageFile
+          });
+        } catch (uploadError) {
+          // Don't throw the error, just log it and continue
+          alert(`Image upload failed: ${uploadError?.response?.data?.message || uploadError?.message || 'Unknown error'}`);
+        }
       }
 
       router.push('/admin/technologies');

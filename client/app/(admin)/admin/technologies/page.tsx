@@ -81,12 +81,15 @@ export default function TechnologiesPage() {
 
   const handleEditTechnology = (technology: Technology) => {
     // Navigate to edit page
-    window.location.href = `/admin/technologies/edit/${technology._id}`;
+    const technologyId = technology._id || technology.id;
+    window.location.href = `/admin/technologies/edit/${technologyId}`;
   };
 
   const handleDeleteTechnology = (id: string) => {
     // Find the technology to get its name for confirmation
-    const technology = technologiesData?.technologies?.find(tech => tech._id === id);
+    const technology = technologiesData?.technologies?.find(tech =>
+      (tech._id === id) || (tech.id === id)
+    );
     const technologyName = technology?.name || 'Unknown Technology';
 
     // Show confirmation dialog
@@ -107,7 +110,8 @@ export default function TechnologiesPage() {
       setSelectedTechnologies(prev => prev.filter(techId => techId !== deleteConfirmation.technologyId));
 
       // Close modal if the deleted technology was being viewed
-      if (selectedTechnology?._id === deleteConfirmation.technologyId) {
+      const selectedTechId = selectedTechnology?._id || selectedTechnology?.id;
+      if (selectedTechId === deleteConfirmation.technologyId) {
         setIsModalOpen(false);
         setSelectedTechnology(null);
       }

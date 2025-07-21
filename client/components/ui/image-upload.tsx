@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import {
@@ -30,6 +30,46 @@ interface ImageUploadProps {
 const DEFAULT_ACCEPTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const DEFAULT_MAX_SIZE = 5; // 5MB
 
+// Helper function to validate and format image URLs
+const getValidImageUrl = (imageUrl: string | null | undefined): string | null => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return null;
+  }
+
+  // If it's a data URL (base64), return it as is
+  if (imageUrl.startsWith('data:')) {
+    return imageUrl;
+  }
+
+  // If it's already a full URL, validate it
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      new URL(imageUrl);
+      return imageUrl;
+    } catch {
+      return null;
+    }
+  }
+
+  // If it's a relative path, construct the full URL
+  if (imageUrl.startsWith('/') || imageUrl.startsWith('media/')) {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const serverBaseUrl = baseUrl.replace('/api/v1', '');
+    return `${serverBaseUrl}/${imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl}`;
+  }
+
+  // For other cases, try to construct a valid URL
+  try {
+    new URL(imageUrl);
+    return imageUrl;
+  } catch {
+    // If it's not a valid URL, treat it as a relative path
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const serverBaseUrl = baseUrl.replace('/api/v1', '');
+    return `${serverBaseUrl}/${imageUrl}`;
+  }
+};
+
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   value,
   onChange,
@@ -44,9 +84,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   isUploading = false
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [preview, setPreview] = useState<string | null>(value || null);
+  const [preview, setPreview] = useState<string | null>(getValidImageUrl(value));
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update preview when value prop changes
+  useEffect(() => {
+    setPreview(getValidImageUrl(value));
+  }, [value]);
 
   const validateFile = useCallback((file: File): string | null => {
     // Check file type
@@ -226,13 +271,22 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             className="relative"
           >
             <div className="relative w-full h-48 bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700">
-              <Image
-                src={preview}
-                alt="Preview"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
+              {preview ? (
+                <Image
+                  src={preview}
+                  alt="Preview"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  onError={() => {
+                    setPreview(null);
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <FiImage className="w-12 h-12 text-slate-500" />
+                </div>
+              )}
               
               {/* Remove Button */}
               <motion.button

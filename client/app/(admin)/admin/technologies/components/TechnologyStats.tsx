@@ -8,7 +8,7 @@ import {
   FiStar,
   FiActivity
 } from 'react-icons/fi';
-// import { useTechnologyStats } from '@/lib/hooks/use-technologies';
+import { useTechnologyStats } from '@/lib/hooks/use-technologies';
 import { GlassCard } from '@/components/ui/glass-card';
 
 interface StatCardProps {
@@ -68,40 +68,57 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 export const TechnologyStats: React.FC = () => {
-  // Mock data for now
-  const stats = {
-    total: 25,
-    active: 20,
-    featured: 8,
-    learning: 3
+  // Fetch real data from API
+  const { data: stats, isLoading, error } = useTechnologyStats();
+
+  // Fallback to zeros if no data
+  const safeStats = {
+    total: stats?.total || 0,
+    active: stats?.active || 0,
+    featured: stats?.featured || 0,
+    learning: stats?.learning || 0,
+    expert: stats?.expert || 0
   };
-  const isLoading = false;
+
+  // If there's an error, show error state
+  if (error) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <GlassCard className="p-6 col-span-full">
+          <div className="text-center text-red-400">
+            <p>Failed to load technology statistics</p>
+            <p className="text-sm text-primary-300 mt-1">Please try refreshing the page</p>
+          </div>
+        </GlassCard>
+      </div>
+    );
+  }
 
   const statCards = [
     {
       title: 'Total Technologies',
-      value: stats?.total || 0,
+      value: safeStats.total,
       icon: FiCode,
       color: 'bg-gradient-to-br from-blue-500 to-blue-600',
       trend: { value: 12, isPositive: true }
     },
     {
       title: 'Active Technologies',
-      value: stats?.active || 0,
+      value: safeStats.active,
       icon: FiActivity,
       color: 'bg-gradient-to-br from-green-500 to-green-600',
       trend: { value: 8, isPositive: true }
     },
     {
       title: 'Featured Technologies',
-      value: stats?.featured || 0,
+      value: safeStats.featured,
       icon: FiStar,
       color: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
       trend: { value: 3, isPositive: false }
     },
     {
-      title: 'Learning',
-      value: stats.learning,
+      title: 'Learning Level',
+      value: safeStats.learning,
       icon: FiTrendingUp,
       color: 'bg-gradient-to-br from-orange-500 to-orange-600',
       trend: { value: 5, isPositive: true }
@@ -109,7 +126,7 @@ export const TechnologyStats: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {statCards.map((stat) => (
         <StatCard
           key={stat.title}

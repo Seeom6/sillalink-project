@@ -17,6 +17,41 @@ import { Technology, TechnologySortField, SortOrder } from '@/lib/types/technolo
 import { GlassCard } from '@/components/ui/glass-card';
 import { EnhancedButton } from '@/components/ui/enhanced-button';
 
+// Helper function to validate and format image URLs
+const getValidImageUrl = (imageUrl: string | undefined): string | null => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return null;
+  }
+
+  // If it's already a full URL, return it
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      new URL(imageUrl);
+      return imageUrl;
+    } catch {
+      return null;
+    }
+  }
+
+  // If it's a relative path, construct the full URL
+  if (imageUrl.startsWith('/') || imageUrl.startsWith('media/')) {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const serverBaseUrl = baseUrl.replace('/api/v1', '');
+    return `${serverBaseUrl}/${imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl}`;
+  }
+
+  // For other cases, try to construct a valid URL
+  try {
+    new URL(imageUrl);
+    return imageUrl;
+  } catch {
+    // If it's not a valid URL, treat it as a relative path
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const serverBaseUrl = baseUrl.replace('/api/v1', '');
+    return `${serverBaseUrl}/${imageUrl}`;
+  }
+};
+
 interface TechnologyTableProps {
   technologies: Technology[];
   selectedIds: string[];
@@ -165,38 +200,46 @@ export const TechnologyTable: React.FC<TechnologyTableProps> = ({
               </tr>
             </thead>
             <tbody className="bg-dark-900/20 divide-y divide-primary-500/10">
-              {technologies.map((technology) => (
-                <motion.tr
-                  key={technology._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="hover:bg-dark-800/30 transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(technology._id)}
-                      onChange={(e) => onSelect(technology._id, e.target.checked)}
-                      className="w-4 h-4 text-primary-500 bg-dark-800 border-primary-500/30 rounded focus:ring-primary-500 focus:ring-2"
-                    />
-                  </td>
+              {technologies.map((technology) => {
+                const technologyId = technology._id || technology.id;
+                return (
+                  <motion.tr
+                    key={technologyId}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-dark-800/30 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(technologyId || technology._id)}
+                        onChange={(e) => onSelect(technologyId || technology._id, e.target.checked)}
+                        className="w-4 h-4 text-primary-500 bg-dark-800 border-primary-500/30 rounded focus:ring-primary-500 focus:ring-2"
+                      />
+                    </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
-                      {technology.image || technology.icon ? (
-                        <div className="w-8 h-8 relative">
-                          <Image
-                            src={technology.image || technology.icon}
-                            alt={technology.name}
-                            fill
-                            className="object-contain rounded"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-purple rounded flex items-center justify-center">
-                          <FiCode className="w-4 h-4 text-white" />
-                        </div>
-                      )}
+                      {(() => {
+                        const imageUrl = getValidImageUrl(technology.image) || getValidImageUrl(technology.icon);
+                        return imageUrl ? (
+                          <div className="w-8 h-8 relative">
+                            <Image
+                              src={imageUrl}
+                              alt={technology.name}
+                              fill
+                              className="object-contain rounded"
+                              onError={() => {
+                                // Handle image load error silently
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-purple rounded flex items-center justify-center">
+                            <FiCode className="w-4 h-4 text-white" />
+                          </div>
+                        );
+                      })()}
                       <div>
                         <div className="flex items-center space-x-2">
                           <span className="text-sm font-medium text-white">{technology.name}</span>
@@ -288,7 +331,7 @@ export const TechnologyTable: React.FC<TechnologyTableProps> = ({
                       <EnhancedButton
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDelete(technology._id)}
+                        onClick={() => onDelete(technologyId || technology._id)}
                         className="text-red-400 hover:text-white"
                       >
                         <FiTrash2 size={16} />
@@ -296,7 +339,8 @@ export const TechnologyTable: React.FC<TechnologyTableProps> = ({
                     </div>
                   </td>
                 </motion.tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

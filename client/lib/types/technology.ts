@@ -31,6 +31,7 @@ export enum DifficultyLevel {
 
 export interface Technology {
   _id: string;
+  id?: string; // Alternative ID field for compatibility
   name: string;
   description: string;
   longDescription?: string;

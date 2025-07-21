@@ -13,7 +13,6 @@ import {
 } from '@/lib/types/technology';
 import { EnhancedButton } from '@/components/ui/enhanced-button';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { useUploadTechnologyImage } from '@/lib/hooks/use-technologies';
 
 interface TechnologyFormProps {
   technology?: Technology;
@@ -31,7 +30,6 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(technology?.image || null);
   const [imageError, setImageError] = useState<string | null>(null);
-  const uploadImage = useUploadTechnologyImage();
 
   const {
     register,
@@ -141,7 +139,6 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             value={imagePreview}
             onChange={handleImageChange}
             error={imageError}
-            isUploading={uploadImage.isPending}
             placeholder="Click to upload technology image or drag and drop"
             maxSize={5}
             acceptedFormats={['image/jpeg', 'image/jpg', 'image/png', 'image/webp']}

@@ -79,7 +79,7 @@ export class TechnologyService {
 
   async delete(id: string): Promise<void> {
     const technology = await this.findById(id);
-    
+
     await this.technologyRepository.findOneAndUpdate({
       filter: { _id: id },
       update: { isDeleted: true, deletedAt: new Date() }

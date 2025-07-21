@@ -19,6 +19,41 @@ import { Technology } from '@/lib/types/technology';
 import { GlassCard } from '@/components/ui/glass-card';
 import { EnhancedButton } from '@/components/ui/enhanced-button';
 
+// Helper function to validate and format image URLs
+const getValidImageUrl = (imageUrl: string | undefined): string | null => {
+  if (!imageUrl || imageUrl.trim() === '') {
+    return null;
+  }
+
+  // If it's already a full URL, return it
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      new URL(imageUrl);
+      return imageUrl;
+    } catch {
+      return null;
+    }
+  }
+
+  // If it's a relative path, construct the full URL
+  if (imageUrl.startsWith('/') || imageUrl.startsWith('media/')) {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const serverBaseUrl = baseUrl.replace('/api/v1', '');
+    return `${serverBaseUrl}/${imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl}`;
+  }
+
+  // For other cases, try to construct a valid URL
+  try {
+    new URL(imageUrl);
+    return imageUrl;
+  } catch {
+    // If it's not a valid URL, treat it as a relative path
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const serverBaseUrl = baseUrl.replace('/api/v1', '');
+    return `${serverBaseUrl}/${imageUrl}`;
+  }
+};
+
 interface TechnologyModalProps {
   technology: Technology | null;
   isOpen: boolean;
@@ -118,20 +153,26 @@ export const TechnologyModal: React.FC<TechnologyModalProps> = ({
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-primary-500/20">
                 <div className="flex items-center space-x-4">
-                  {technology.image || technology.icon ? (
-                    <div className="w-12 h-12 relative">
-                      <Image
-                        src={technology.image || technology.icon}
-                        alt={technology.name}
-                        fill
-                        className="object-contain rounded-lg"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-purple rounded-lg flex items-center justify-center">
-                      <FiCode className="w-6 h-6 text-white" />
-                    </div>
-                  )}
+                  {(() => {
+                    const imageUrl = getValidImageUrl(technology.image) || getValidImageUrl(technology.icon);
+                    return imageUrl ? (
+                      <div className="w-12 h-12 relative">
+                        <Image
+                          src={imageUrl}
+                          alt={technology.name}
+                          fill
+                          className="object-contain rounded-lg"
+                          onError={() => {
+                            // Handle image load error silently
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-purple rounded-lg flex items-center justify-center">
+                        <FiCode className="w-6 h-6 text-white" />
+                      </div>
+                    );
+                  })()}
                   <div>
                     <div className="flex items-center space-x-2">
                       <h2 className="text-2xl font-bold text-white">{technology.name}</h2>
@@ -154,7 +195,7 @@ export const TechnologyModal: React.FC<TechnologyModalProps> = ({
                   </EnhancedButton>
                   <EnhancedButton
                     variant="outline"
-                    onClick={() => onDelete(technology._id)}
+                    onClick={() => onDelete(technology._id || technology.id)}
                     className="border-red-500/30 text-red-400 hover:border-red-500/50"
                   >
                     <FiTrash2 size={16} />

@@ -120,13 +120,11 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
 
   const confirmAction = () => {
     if (confirmationModal.type === 'delete') {
-      // For now, just clear selection and show message
-      console.log('Bulk delete not implemented yet for IDs:', selectedIds);
+      // TODO: Implement bulk delete functionality
       onClearSelection();
       setConfirmationModal({ isOpen: false, type: 'delete' });
     } else if (confirmationModal.type === 'status' && confirmationModal.status) {
-      // For now, just clear selection and show message
-      console.log('Bulk status update not implemented yet:', confirmationModal.status);
+      // TODO: Implement bulk status update functionality
       onClearSelection();
       setConfirmationModal({ isOpen: false, type: 'status' });
     }
@@ -211,8 +209,7 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
               <EnhancedButton
                 variant="outline"
                 onClick={() => {
-                  // Implement export functionality
-                  console.log('Export selected technologies:', selectedIds);
+                  // TODO: Implement export functionality
                 }}
                 className="border-primary-500/30 hover:border-primary-500/50"
               >
@@ -224,8 +221,7 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
               <EnhancedButton
                 variant="outline"
                 onClick={() => {
-                  // Implement duplicate functionality
-                  console.log('Duplicate selected technologies:', selectedIds);
+                  // TODO: Implement duplicate functionality
                 }}
                 className="border-primary-500/30 hover:border-primary-500/50"
               >

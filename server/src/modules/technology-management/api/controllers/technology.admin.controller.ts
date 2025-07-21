@@ -97,6 +97,8 @@ export class TechnologyAdminController {
     };
   }
 
+
+
   @Post('upload-icon')
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
   @UseInterceptors(FileInterceptor('file'))

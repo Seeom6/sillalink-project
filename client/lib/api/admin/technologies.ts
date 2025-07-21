@@ -73,7 +73,7 @@ export const technologiesApi = {
   uploadImage: async (id: string, file: File): Promise<FileUploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await apiClient.post(`${BASE_URL}/${id}/upload-image`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

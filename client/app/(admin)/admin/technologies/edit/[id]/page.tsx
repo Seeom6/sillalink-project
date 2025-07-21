@@ -14,23 +14,25 @@ import Link from 'next/link';
 import { TechnologyForm } from '../../components/TechnologyForm';
 
 interface EditTechnologyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditTechnologyPage({ params }: EditTechnologyPageProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { data: technology, isLoading, error } = useTechnology(params.id);
+
+  // Unwrap the params Promise
+  const { id } = React.use(params);
+  const { data: technology, isLoading, error } = useTechnology(id);
   const updateTechnology = useUpdateTechnology();
 
   const handleSubmit = async (data: TechnologyFormData) => {
     setIsSubmitting(true);
     try {
       await updateTechnology.mutateAsync({
-        id: params.id,
+        id: id,
         data
       });
       router.push('/admin/technologies');
