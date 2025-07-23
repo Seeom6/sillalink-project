@@ -57,6 +57,42 @@ apiClient.interceptors.response.use(
     };
   },
   (error) => {
+    // Enhanced error logging for debugging
+    console.group('🔴 API Client Error');
+
+    // Log the complete error object
+    console.error('Full Error Object:', error);
+
+    // Extract and log key error information
+    const errorInfo = {
+      name: error?.name,
+      message: error?.message,
+      isAxiosError: error?.isAxiosError,
+      code: error?.code,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      responseData: error?.response?.data,
+      requestMethod: error?.config?.method,
+      requestURL: error?.config?.url,
+      requestData: error?.config?.data
+    };
+
+    console.log('Error Summary:', errorInfo);
+
+    // Log the response data in detail if available
+    if (error?.response?.data) {
+      console.log('Response Data Details:', {
+        message: error.response.data.message,
+        error: error.response.data.error,
+        statusCode: error.response.data.statusCode,
+        code: error.response.data.code,
+        keyValue: error.response.data.keyValue,
+        keyPattern: error.response.data.keyPattern
+      });
+    }
+
+    console.groupEnd();
+
     if (error.response?.status === 401) {
       // Handle unauthorized access
       if (typeof window !== 'undefined') {
@@ -68,7 +104,18 @@ apiClient.interceptors.response.use(
         window.location.href = '/auth/login';
       }
     }
-    return Promise.reject(error);
+
+    // Ensure the error has the expected structure for our error handler
+    if (error.response) {
+      // Axios error with response - preserve the structure
+      return Promise.reject(error);
+    } else {
+      // Network error or other error - wrap it
+      return Promise.reject({
+        message: error.message || 'Network error',
+        response: null
+      });
+    }
   }
 );
 

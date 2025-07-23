@@ -195,7 +195,7 @@ export const TechnologyModal: React.FC<TechnologyModalProps> = ({
                   </EnhancedButton>
                   <EnhancedButton
                     variant="outline"
-                    onClick={() => onDelete(technology._id || technology.id)}
+                    onClick={() => onDelete(technology?._id)}
                     className="border-red-500/30 text-red-400 hover:border-red-500/50"
                   >
                     <FiTrash2 size={16} />

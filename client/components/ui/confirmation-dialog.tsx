@@ -128,7 +128,21 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                   </EnhancedButton>
                   
                   <EnhancedButton
-                    onClick={onConfirm}
+                    variant="primary"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔴 ConfirmationDialog: Confirm button clicked');
+                      console.log('🔴 ConfirmationDialog: onConfirm function:', onConfirm);
+                      console.log('🔴 ConfirmationDialog: isLoading:', isLoading);
+                      console.log('🔴 ConfirmationDialog: About to call onConfirm...');
+                      try {
+                        onConfirm();
+                        console.log('🔴 ConfirmationDialog: onConfirm called successfully');
+                      } catch (error) {
+                        console.error('🔴 ConfirmationDialog: Error calling onConfirm:', error);
+                      }
+                    }}
                     disabled={isLoading}
                     className={`text-white ${styles.confirmButton} transition-colors`}
                   >
